@@ -12,12 +12,12 @@ void PrintAST::visit(ASTNode & n){
 	LEVEL(level); std::cout << "Entry Point : " << n.entry << std::endl;
 	LEVEL(level); std::cout << "defvar : " << std::endl;
 	level++; std::for_each(n.defvars.begin(), n.defvars.end(), [=, &i](Node * n){ 
-		LEVEL(level); std::cout << "[ " << i << " ]" << std::endl;
+		LEVEL(level - 1); std::cout << "[ " << i << " ]" << std::endl;
 		n->accept(*this); i++;
 	} ); level--; i = 0;
 	LEVEL(level); std::cout << "defunc : " << std::endl;
 	level++; std::for_each(n.defunc.begin(), n.defunc.end(), [=, &i](Node * n){ 
-		LEVEL(level); std::cout << "[ " << i << " ]" << std::endl;
+		LEVEL(level - 1); std::cout << "[ " << i << " ]" << std::endl;
 		n->accept(*this); i++;
 	} ); level--;
 	LEVEL(level); std::cout << "block : " << std::endl;
@@ -41,12 +41,12 @@ void PrintAST::visit(DefFunctionNode & n){
 	level++; n.retype->accept(*this); level--;
 	LEVEL(level); std::cout << "args : " << std::endl;
 	level++; std::for_each(n.args.begin(), n.args.end(), [=, &i](Node * n){ 
-		LEVEL(level); std::cout << "[ " << i << " ]" << std::endl;
+		LEVEL(level - 1); std::cout << "[ " << i << " ]" << std::endl;
 		n->accept(*this); i++;
 	} ); level--; i = 0;
 	LEVEL(level); std::cout << "vars : " << std::endl;
 	level++; std::for_each(n.vars.begin(), n.vars.end(), [=, &i](Node * n){ 
-		LEVEL(level); std::cout << "[ " << i << " ]" << std::endl;
+		LEVEL(level - 1); std::cout << "[ " << i << " ]" << std::endl;
 		n->accept(*this); i++;
 	} ); level--;
 	LEVEL(level); std::cout << "block : " << std::endl;
@@ -57,7 +57,7 @@ void PrintAST::visit(BlockNode & n){
 	LEVEL(level); std::cout << "< Block >" << std::endl;
 	LEVEL(level); std::cout << "stmts : " << std::endl;
 	level++; std::for_each(n.stmts.begin(), n.stmts.end(), [=, &i](Node * n){ 
-		LEVEL(level); std::cout << "[ " << i << " ]" << std::endl;
+		LEVEL(level - 1); std::cout << "[ " << i << " ]" << std::endl;
 		n->accept(*this); i++;
 	} ); level--;
 }
@@ -94,7 +94,7 @@ void PrintAST::visit(IfNode & n){
 	level++; n.stmt->accept(*this); level--;
 	LEVEL(level); std::cout << "elif : " << std::endl;
 	level++; std::for_each(n.elif.begin(), n.elif.end(), [=, &i](Node * n){ 
-		LEVEL(level); std::cout << "[ " << i << " ]" << std::endl;
+		LEVEL(level - 1); std::cout << "[ " << i << " ]" << std::endl;
 		n->accept(*this); i++;
 	} ); level--;
 	if(n.Else != NULL){
@@ -134,7 +134,7 @@ void PrintAST::visit(FunctionCallNode & n){
 	LEVEL(level); std::cout << "name : " << n.name << std::endl;
 	LEVEL(level); std::cout << "args : " << std::endl;
 	level++; std::for_each(n.args.begin(), n.args.end(), [=, &i](Node * n){ 
-		LEVEL(level); std::cout << "[ " << i << " ]" << std::endl;
+		LEVEL(level - 1); std::cout << "[ " << i << " ]" << std::endl;
 		n->accept(*this); i++;
 	} ); level--;
 }

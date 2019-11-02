@@ -60,6 +60,8 @@ const char * getOp(NodeKind code){
 		case Block: return "block";
 		case Param: return "param";
 		case Void: return "void";
+		case Int: return "int";
+		case Float: return "float";
 	}
 	return "Unknown";
 }

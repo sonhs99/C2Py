@@ -31,7 +31,7 @@
 
 %%
 
-(0|[1-9][0-9]*)("."[0-9]+)?	{
+(0|[1-9][0-9]*)("."[0-9]+[1-9])?	{
 	char * str = malloc(sizeof(yytext));
 	yylval.data = strcpy(str, yytext);
 	return NUMBER;

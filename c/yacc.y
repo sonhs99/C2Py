@@ -25,6 +25,9 @@
 %type<node> if elif else while for procedure variable exprs expr
 %type<node> expr_list term stmt_semi
 
+%destructor { } <data>
+%destructor { free ($$); } <*>
+
 %parse-param {
 	struct TreeNode ** pt
 }
@@ -32,9 +35,9 @@
 %%
 program
 	:MAINPROG IDENT SEMICOLON declarations subprograms block {
+		$5->sibling = $6;
 		$$ = CreatePT(Root, $2, 
-			CreatePT(Decls, NULL, $4, 
-			CreatePT(Funcs, NULL, $5, $6))
+			CreatePT(Decls, NULL, $4, $5)
 		, NULL);
 		*pt = $$;
 	}
@@ -62,7 +65,7 @@ standard_type
 	|FLOAT { $$ = CreatePT(Float, $1, NULL, NULL); }
 	
 subprograms
-	:subprogram subprograms { $1->sibling = $2; $$ = $1; }
+	:subprogram subprograms {$$ = CreatePT(Funcs, NULL, $1, $2); }
 	| { $$ = CreatePT(Void, NULL, NULL, NULL); }
 	
 subprogram
@@ -76,8 +79,10 @@ subprogram_head
 		$3->sibling = $5;
 		$$ = CreatePT(Func, $2, $3, NULL);
 	}
-	|FUNCTION IDENT args SEMICOLON { $$ = CreatePT(Func, $2, $3, 
-										CreatePT(Void, NULL, NULL, NULL)); }
+	|FUNCTION IDENT args SEMICOLON { 
+		$3->sibling = CreatePT(Void, NULL, NULL, NULL);
+		$$ = CreatePT(Func, $2, $3, NULL); 
+	}
 	
 args
 	:LPAREN params RPAREN { $$ = CreatePT(Params, NULL, $2, NULL);}
@@ -99,12 +104,12 @@ stmts
 	
 stmt
 	:stmt_semi SEMICOLON { $$ = $1; }
-	|stmt_semi error { yyerrok; }
+	|stmt_semi error { yyerrok; $$ = NULL; }
 	|block
 	|if
 	|while
 	|for
-	|error SEMICOLON { yyerrok; }
+	|error SEMICOLON { yyerrok; $$ = NULL; }
 	
 	
 stmt_semi

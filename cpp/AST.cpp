@@ -59,7 +59,7 @@ Node * ASTGenerate(ParseTree * pt){
 		case Func:
 			temp_b = new DefFunctionNode(pt->data,
 										ASTGenerate(pt->child->sibling),
-										ASTGenerate(pt->child->sibling->sibling));
+										ASTGenerate(pt->child->sibling->sibling->sibling));
 			for(auto temp_a = pt->child->child; temp_a != NULL; temp_a = temp_a->sibling)
 				((DefFunctionNode *)temp_b)->addArg(ASTGenerate(temp_a));
 			for(auto temp_a = pt->child->sibling->sibling->child; temp_a != NULL; temp_a = temp_a->sibling)
