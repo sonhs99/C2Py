@@ -4,6 +4,8 @@
 #include <ParseTree.h>
 %}
 
+%define parse.error verbose
+
 %union {
     char * data;
 	struct TreeNode * node;
@@ -21,7 +23,7 @@
 %type<node> program declarations identifier_list type standard_type subprograms
 %type<node> subprogram subprogram_head args params block stmts stmt
 %type<node> if elif else while for procedure variable exprs expr
-%type<node> expr_list term 
+%type<node> expr_list term stmt_semi
 
 %parse-param {
 	struct TreeNode ** pt
@@ -30,8 +32,10 @@
 %%
 program
 	:MAINPROG IDENT SEMICOLON declarations subprograms block {
-		$4->sibling = $5; $5->sibling = $6;
-		$$ = CreatePT(Root, $2, $4, NULL);
+		$$ = CreatePT(Root, $2, 
+			CreatePT(Decls, NULL, $4, 
+			CreatePT(Funcs, NULL, $5, $6))
+		, NULL);
 		*pt = $$;
 	}
 	
@@ -63,9 +67,7 @@ subprograms
 	
 subprogram
 	:subprogram_head declarations block {
-		if($1->child->sibling == NULL) $1->child->sibling = $2;
-		else $1->child->sibling->sibling = $2;
-		$2->sibling = $3;
+		$1->child->sibling->sibling = CreatePT(Decls, NULL, $2, $3);
 		$$ = $1;
 	}
 
@@ -74,17 +76,18 @@ subprogram_head
 		$3->sibling = $5;
 		$$ = CreatePT(Func, $2, $3, NULL);
 	}
-	|FUNCTION IDENT args SEMICOLON { $$ = CreatePT(Func, $2, $3, NULL); }
+	|FUNCTION IDENT args SEMICOLON { $$ = CreatePT(Func, $2, $3, 
+										CreatePT(Void, NULL, NULL, NULL)); }
 	
 args
-	:LPAREN params RPAREN { $$ = $2;}
+	:LPAREN params RPAREN { $$ = CreatePT(Params, NULL, $2, NULL);}
 	| { $$ = CreatePT(Void, NULL, NULL, NULL); }
 	
 params
-	:identifier_list COLON type { $1->sibling = $3; $$ = CreatePT(Param, NULL, $1,NULL);}
+	:identifier_list COLON type { $3->sibling = $1; $$ = CreatePT(Param, NULL, $3,NULL);}
 	|identifier_list COLON type SEMICOLON params { 
-		$1->sibling = $3;
-		$$ = CreatePT(Param, NULL, $1, $5); 
+		$3->sibling = $1;
+		$$ = CreatePT(Param, NULL, $3, $5); 
 	}
 	
 block
@@ -95,18 +98,25 @@ stmts
 	| { $$ = NULL; }
 	
 stmt
-	:variable ASS expr SEMICOLON { $1->sibling = $3; $$ = CreatePT(Assign, NULL, $1, NULL); }
-	|procedure SEMICOLON { $$ = $1; }
+	:stmt_semi SEMICOLON { $$ = $1; }
+	|stmt_semi error { yyerrok; }
 	|block
 	|if
 	|while
 	|for
-	|RETURN expr SEMICOLON { $$ = CreatePT(Return, NULL, $2, NULL); }
-	|NOP SEMICOLON { $$ = CreatePT(Nop, NULL, NULL, NULL); }
+	|error SEMICOLON { yyerrok; }
+	
+	
+stmt_semi
+	:variable ASS expr { $1->sibling = $3; $$ = CreatePT(Assign, NULL, $1, NULL); }
+	|procedure { $$ = $1; }
+	|RETURN expr { $$ = CreatePT(Return, NULL, $2, NULL); }
+	|NOP { $$ = CreatePT(Nop, NULL, NULL, NULL); }
 	
 if
 	: IF expr COLON stmt elif else{
-		$2->sibling = $4; $4->sibling = $5; $5->sibling = $6;
+		$2->sibling = $4;
+		$4->sibling = CreatePT(Elifs, NULL, $5, $6);
 		$$ = CreatePT(If, NULL, $2, NULL);
 	}
 
@@ -176,8 +186,7 @@ term
 %%
 
 int yyerror(struct TreeNode ** pt, char const *str) {
-    extern char *yytext;
 	extern int yylineno;
-    fprintf(stderr, "Error : line (%d) %s, parser error near \"%s\"\n", yylineno, str, yytext);
+    fprintf(stderr, "line(%d): %s \n", yylineno, str);
     return 0;
 }

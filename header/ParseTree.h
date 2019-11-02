@@ -1,16 +1,17 @@
 #pragma once
 
 typedef enum _NodeKind {
-	Plus, Minus, Mul, Div, Pos, Neg, Assign,
+	Plus=0, Minus, Mul, Div, Pos, Neg, Assign,
 	Greater, EquGre, Less, EquLess, Equ, NotEqu, In, Not,
-	Func, Proc, If, For, Else, While, Return, Nop, Elif,
+	Func, Proc, If, For, Else, While, Return, Nop, 
+	Elif, Elifs, Funcs, Params,
 	Num, Ident, Int, Float,
-	Root, Void, Type, Decl, Var, Block, Param
+	Root, Void, Type, Decl, Decls, Var, Block, Param
 } NodeKind;
 
 typedef struct TreeNode{
 	NodeKind type;
-	void * data;
+	char * data;
 	struct TreeNode * child;
 	struct TreeNode * sibling;
 } ParseTree;
@@ -22,7 +23,7 @@ extern "C" {
 ParseTree *	CreatePT(NodeKind type, char * data, ParseTree * ch, ParseTree * s);
 void		DeletePT(ParseTree * head);
 void 		PrintPT(ParseTree * head, int level);
-
+const char * getOp(NodeKind);
 #ifdef __cplusplus
 }
 #endif

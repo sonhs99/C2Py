@@ -9,13 +9,11 @@ ParseTree * Parser::parse(){
 	yyin = fopen(File.c_str(), "r");
 	if(yyin == NULL) {
 		fprintf(stderr, "Error : file is not find\n");
-		exit(1);
+		return NULL;
 	}
 	if(yyparse(&head)) {
-        fprintf(stderr, "Error!\n");
-        exit(1);
+        return NULL;
     }
 	fclose(yyin);
-	PrintPT(head, 0);
 	return head;
 }

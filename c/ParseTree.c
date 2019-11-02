@@ -5,8 +5,6 @@
 
 #define LEVEL(level) for(int i = 0; i < level; i++) printf("  ");
 
-const char * getOp(int code);
-
 ParseTree * CreatePT(NodeKind type, char * data, ParseTree * ch, ParseTree * s){
 	ParseTree * node = malloc(sizeof(ParseTree));
 	node->type = type;
@@ -36,7 +34,7 @@ void PrintPT(ParseTree * head, int level){
 	PrintPT(head->sibling, level);
 }
 
-const char * getOp(int code){
+const char * getOp(NodeKind code){
 	switch(code){
 		case Plus: case Pos: return "+";
 		case Minus: case Neg: return "-";
@@ -57,6 +55,7 @@ const char * getOp(int code){
 		case Return: return "return";
 		case Type: return "type";
 		case Decl: return "decl";
+		case Decls: return "decls";
 		case Var: return "var";
 		case Block: return "block";
 		case Param: return "param";

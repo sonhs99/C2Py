@@ -5,10 +5,9 @@
 class Parser{
 private:
 	std::string File;
-	bool showPT;
-	bool showAST;
+	
 public:
-	Parser(std::string f, bool pt, bool ast):
-		File(f), showPT(pt), showAST(ast) {};
+	Parser(std::string f):
+		File(f) {};
 	ParseTree * parse();
 };

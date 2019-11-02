@@ -1,3 +1,5 @@
+LOGFILE = log.txt
+
 all: run.out
 
 run.out: c.o cpp.o
@@ -13,6 +15,7 @@ clean:
 	make -C c clean
 	make -C cpp clean
 	rm -r ./bin/run
+	rm -r $(LOGFILE)
 	
 run:
-	./bin/run
+	./bin/run > $(LOGFILE)

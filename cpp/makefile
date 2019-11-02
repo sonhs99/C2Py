@@ -1,6 +1,6 @@
 CC = g++ -c
 CFLAG = -std=c++14 -I../header
-CFILE = main.cpp Parser.cpp
+CFILE = main.cpp Parser.cpp AST.cpp PrintAST.cpp
 TARGET = cpp.o
 
 all: $(TARGET)
