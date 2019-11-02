@@ -2,31 +2,35 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <ParseTree.h>
+
+extern int yylex();
+int yyerror(struct TreeNode ** pt, char const *str);
 %}
 
 %define parse.error verbose
+%define parse.lac full
 
 %union {
     char * data;
 	struct TreeNode * node;
 }
-%token<data> NUMBER IDENT INT FLOAT
+%token<data> NUMBER IDENT
 %left ASS 
 %left EQUAL NOTEQU GREATER EQUGRE LESS EQULESS IN
 %left ADD SUB
 %left MUL DIV
 %nonassoc UMINUS UPLUS NOT
-%token LPAREN RPAREN LBRACKET RBRACKET DOT
+
+%token LPAREN "(" RPAREN ")" LBRACKET "[" RBRACKET "]"
+%token COMMA "," SEMICOLON ";" COLON ":" 
 %token MAINPROG FUNCTION PROCEDURE BEG END IF
 %token ELIF ELSE NOP WHILE RETURN
-%token COMMA SEMICOLON COLON FOR IN
+%token FOR IN INT FLOAT
+
 %type<node> program declarations identifier_list type standard_type subprograms
 %type<node> subprogram subprogram_head args params block stmts stmt
 %type<node> if elif else while for procedure variable exprs expr
 %type<node> expr_list term stmt_semi
-
-%destructor { } <data>
-%destructor { free ($$); } <*>
 
 %parse-param {
 	struct TreeNode ** pt
@@ -61,8 +65,8 @@ type
 	}
 	
 standard_type
-	:INT { $$ = CreatePT(Int, $1, NULL, NULL); }
-	|FLOAT { $$ = CreatePT(Float, $1, NULL, NULL); }
+	:INT { $$ = CreatePT(Int, NULL, NULL, NULL); }
+	|FLOAT { $$ = CreatePT(Float, NULL, NULL, NULL); }
 	
 subprograms
 	:subprogram subprograms {$$ = CreatePT(Funcs, NULL, $1, $2); }
@@ -104,12 +108,10 @@ stmts
 	
 stmt
 	:stmt_semi SEMICOLON { $$ = $1; }
-	|stmt_semi error { yyerrok; $$ = NULL; }
 	|block
 	|if
 	|while
 	|for
-	|error SEMICOLON { yyerrok; $$ = NULL; }
 	
 	
 stmt_semi
