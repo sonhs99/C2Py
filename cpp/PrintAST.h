@@ -16,7 +16,8 @@ public:
 	void visit(BlockNode & n);
 	void visit(TypeNode & n);
 	void visit(BasicTypeNode & n);
-	void visit(LoopNode & n);
+	void visit(WhileNode & n);
+	void visit(ForNode & n);
 	void visit(IfNode & n);
 	void visit(BinaryNode & n);
 	void visit(UnaryNode & n);

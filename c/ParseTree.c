@@ -16,7 +16,11 @@ ParseTree * CreatePT(NodeKind type, char * data, ParseTree * ch, ParseTree * s){
 
 void DeletePT(ParseTree * head){
 	if(head == NULL) return;
-	free(head->data);
+	if(head->type == Ident
+	  || head->type == Num
+	  || head->type == Func
+	  || head->type == Var
+	  || head->type == Proc) free(head->data);
 	DeletePT(head->sibling);
 	DeletePT(head->child);
 	free(head);
@@ -29,7 +33,7 @@ void PrintPT(ParseTree * head, int level){
 	else if(head->type == Func) printf("< function : %s >\n", (char*)(head->data));
 	else if(head->type == Var) printf("< variable : %s >\n", (char*)(head->data));
 	else if(head->type == Proc) printf("< funcCall : %s >\n", (char*)(head->data));
-	else printf("< %s >\n", head->data == NULL ? getOp(head->type) : (char*)(head->data));
+	else printf("< %s >\n", head->data);
 	PrintPT(head->child, level + 1);
 	PrintPT(head->sibling, level);
 }
@@ -55,7 +59,6 @@ const char * getOp(NodeKind code){
 		case Return: return "return";
 		case Type: return "type";
 		case Decl: return "decl";
-		case Decls: return "decls";
 		case Var: return "var";
 		case Block: return "block";
 		case Param: return "param";

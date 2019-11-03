@@ -1,9 +1,9 @@
 mainprog main;
 function main : int
-int b;
+int b, c;
 begin
-	while b != 2 : b = b+1;
-	b = 1;
+	b != 2 : b = b+1;
+	b = func(a*3, c-4)
 end
 begin
 	a = 1;

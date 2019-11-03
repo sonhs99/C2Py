@@ -8,7 +8,6 @@ int yyerror(struct TreeNode ** pt, char const *str);
 %}
 
 %define parse.error verbose
-%define parse.lac full
 
 %union {
     char * data;
@@ -41,7 +40,7 @@ program
 	:MAINPROG IDENT SEMICOLON declarations subprograms block {
 		$5->sibling = $6;
 		$$ = CreatePT(Root, $2, 
-			CreatePT(Decls, NULL, $4, $5)
+			CreatePT(List, "list", $4, $5)
 		, NULL);
 		*pt = $$;
 	}
@@ -49,32 +48,32 @@ program
 declarations
 	:type identifier_list SEMICOLON declarations {
 		$1->sibling = $2;
-		$$ = CreatePT(Decl, NULL, $1, $4);
+		$$ = CreatePT(Decl, "decl", $1, $4);
 	}
-	| { $$ = CreatePT(Void, NULL, NULL, NULL); }
+	| { $$ = CreatePT(Void, "void", NULL, NULL); }
 	
 identifier_list
 	:IDENT { $$ = CreatePT(Ident, $1, NULL, NULL); }
 	|IDENT COMMA identifier_list { $$ = CreatePT(Ident, $1, NULL, $3); }
 	
 type
-	: standard_type { $$ = CreatePT(Type, NULL, $1, NULL); }
+	: standard_type { $$ = CreatePT(Type, "type", $1, NULL); }
 	| standard_type LBRACKET NUMBER RBRACKET{
 		$1->sibling = CreatePT(Num, $3, NULL, NULL);
-		$$ = CreatePT(Type, NULL, $1, NULL);
+		$$ = CreatePT(Type, "type", $1, NULL);
 	}
 	
 standard_type
-	:INT { $$ = CreatePT(Int, NULL, NULL, NULL); }
-	|FLOAT { $$ = CreatePT(Float, NULL, NULL, NULL); }
+	:INT { $$ = CreatePT(Int, "int", NULL, NULL); }
+	|FLOAT { $$ = CreatePT(Float, "float", NULL, NULL); }
 	
 subprograms
-	:subprogram subprograms {$$ = CreatePT(Funcs, NULL, $1, $2); }
-	| { $$ = CreatePT(Void, NULL, NULL, NULL); }
+	:subprogram subprograms {$$ = CreatePT(List, "list", $1, $2); }
+	| { $$ = CreatePT(Void, "void", NULL, NULL); }
 	
 subprogram
 	:subprogram_head declarations block {
-		$1->child->sibling->sibling = CreatePT(Decls, NULL, $2, $3);
+		$1->child->sibling->sibling = CreatePT(List, "list", $2, $3);
 		$$ = $1;
 	}
 
@@ -84,23 +83,23 @@ subprogram_head
 		$$ = CreatePT(Func, $2, $3, NULL);
 	}
 	|FUNCTION IDENT args SEMICOLON { 
-		$3->sibling = CreatePT(Void, NULL, NULL, NULL);
+		$3->sibling = CreatePT(Void, "void", NULL, NULL);
 		$$ = CreatePT(Func, $2, $3, NULL); 
 	}
 	
 args
-	:LPAREN params RPAREN { $$ = CreatePT(Params, NULL, $2, NULL);}
-	| { $$ = CreatePT(Void, NULL, NULL, NULL); }
+	:LPAREN params RPAREN { $$ = CreatePT(List, "list", $2, NULL);}
+	| { $$ = CreatePT(Void, "void", NULL, NULL); }
 	
 params
-	:identifier_list COLON type { $3->sibling = $1; $$ = CreatePT(Param, NULL, $3,NULL);}
+	:identifier_list COLON type { $3->sibling = $1; $$ = CreatePT(Param, "param", $3,NULL);}
 	|identifier_list COLON type SEMICOLON params { 
 		$3->sibling = $1;
-		$$ = CreatePT(Param, NULL, $3, $5); 
+		$$ = CreatePT(Param, "param", $3, $5); 
 	}
 	
 block
-	:BEG stmts END{ $$ = CreatePT(Block, NULL, $2, NULL); }
+	:BEG stmts END{ $$ = CreatePT(Block, "block", $2, NULL); }
 
 stmts
 	:stmt stmts{ $1->sibling = $2; $$ = $1; }
@@ -108,6 +107,7 @@ stmts
 	
 stmt
 	:stmt_semi SEMICOLON { $$ = $1; }
+	|stmt_semi error { yyerrok; }
 	|block
 	|if
 	|while
@@ -115,40 +115,42 @@ stmt
 	
 	
 stmt_semi
-	:variable ASS expr { $1->sibling = $3; $$ = CreatePT(Assign, NULL, $1, NULL); }
+	:variable ASS expr { $1->sibling = $3; $$ = CreatePT(Assign, "=", $1, NULL); }
+	|variable error expr { yyerrok; }
 	|procedure { $$ = $1; }
-	|RETURN expr { $$ = CreatePT(Return, NULL, $2, NULL); }
-	|NOP { $$ = CreatePT(Nop, NULL, NULL, NULL); }
+	|RETURN expr { $$ = CreatePT(Return, "return", $2, NULL); }
+	|NOP { $$ = CreatePT(Nop, "nop", NULL, NULL); }
 	
 if
 	: IF expr COLON stmt elif else{
 		$2->sibling = $4;
-		$4->sibling = CreatePT(Elifs, NULL, $5, $6);
-		$$ = CreatePT(If, NULL, $2, NULL);
+		$4->sibling = CreatePT(List, "list", $5, $6);
+		$$ = CreatePT(If, "if", $2, NULL);
 	}
+	|error { yyerrok; YYABORT; }
 
 elif
 	:ELIF expr COLON stmt elif{
 		$2->sibling = $4;
-		$$ = CreatePT(Elif, NULL, $2, $5);
+		$$ = CreatePT(Elif, "elif", $2, $5);
 	}
-	| { $$ = CreatePT(Void, NULL, NULL, NULL); }
+	| { $$ = CreatePT(Void, "void", NULL, NULL); }
 	
 else
-	:ELSE COLON stmt { $$ = CreatePT(Else, NULL, $3, NULL); }
-	| { $$ = CreatePT(Void, NULL, NULL, NULL); }
+	:ELSE COLON stmt { $$ = CreatePT(Else, "else", $3, NULL); }
+	| { $$ = CreatePT(Void, "void", NULL, NULL); }
 	
 while
 	:WHILE expr COLON stmt else {
 		$2->sibling = $4; $4->sibling = $5;
-		$$ = CreatePT(While, NULL, $2, NULL);
+		$$ = CreatePT(While, "while", $2, NULL);
 	}
 	
 for
 	:FOR expr IN expr COLON stmt else {
 		$2->sibling = $4; $6->sibling = $7;
-		$$ = CreatePT(For, NULL, 
-			CreatePT(In, NULL, $2, $6),
+		$$ = CreatePT(For, "for", 
+			CreatePT(In, "in", $2, $6),
 			NULL);
 	}
 	
@@ -160,8 +162,8 @@ procedure
 	:IDENT LPAREN expr_list RPAREN { $$ = CreatePT(Proc, $1, $3, NULL); }
 
 expr_list
-	:exprs
-	| { $$ = NULL; }
+	:exprs { $$ = CreatePT(List, "List", $1, NULL); }
+	| { $$ = CreatePT(Void, "void", NULL, NULL); }
 	
 exprs
 	:expr 
@@ -169,26 +171,29 @@ exprs
 	
 expr
 	:term
-	|expr GREATER	expr { $1->sibling = $3; $$ = CreatePT(Greater, NULL, $1, NULL); }
-	|expr EQUGRE	expr { $1->sibling = $3; $$ = CreatePT(EquGre, NULL, $1, NULL); }
-	|expr LESS		expr { $1->sibling = $3; $$ = CreatePT(Less, NULL, $1, NULL); }
-	|expr EQULESS	expr { $1->sibling = $3; $$ = CreatePT(EquLess, NULL, $1, NULL); }
-	|expr EQUAL		expr { $1->sibling = $3; $$ = CreatePT(Equ, NULL, $1, NULL); }
-	|expr NOTEQU	expr { $1->sibling = $3; $$ = CreatePT(NotEqu, NULL, $1, NULL); }
-	|expr ADD		expr { $1->sibling = $3; $$ = CreatePT(Plus, NULL, $1, NULL); }
-	|expr SUB		expr { $1->sibling = $3; $$ = CreatePT(Minus, NULL, $1, NULL); }
-	|expr MUL		expr { $1->sibling = $3; $$ = CreatePT(Mul, NULL, $1, NULL); }
-	|expr DIV		expr { $1->sibling = $3; $$ = CreatePT(Div, NULL, $1, NULL); }
-	|expr IN		expr { $1->sibling = $3; $$ = CreatePT(In, NULL, $1, NULL); }
-	|ADD expr %prec UPLUS  { $$ = CreatePT(Pos, NULL, $2, NULL); }
-	|SUB expr %prec UMINUS { $$ = CreatePT(Neg, NULL, $2, NULL); }
-	|NOT expr { $$ = CreatePT(Not, NULL, $2, NULL); }
+	|expr GREATER	expr { $1->sibling = $3; $$ = CreatePT(Greater, "<", $1, NULL); }
+	|expr EQUGRE	expr { $1->sibling = $3; $$ = CreatePT(EquGre, "<=", $1, NULL); }
+	|expr LESS		expr { $1->sibling = $3; $$ = CreatePT(Less, ">", $1, NULL); }
+	|expr EQULESS	expr { $1->sibling = $3; $$ = CreatePT(EquLess, ">=", $1, NULL); }
+	|expr EQUAL		expr { $1->sibling = $3; $$ = CreatePT(Equ, "==", $1, NULL); }
+	|expr NOTEQU	expr { $1->sibling = $3; $$ = CreatePT(NotEqu, "!=", $1, NULL); }
+	|expr ADD		expr { $1->sibling = $3; $$ = CreatePT(Plus, "+", $1, NULL); }
+	|expr SUB		expr { $1->sibling = $3; $$ = CreatePT(Minus, "-", $1, NULL); }
+	|expr MUL		expr { $1->sibling = $3; $$ = CreatePT(Mul, "*", $1, NULL); }
+	|expr DIV		expr { $1->sibling = $3; $$ = CreatePT(Div, "/", $1, NULL); }
+	|expr IN		expr { $1->sibling = $3; $$ = CreatePT(In, "in", $1, NULL); }
+	|expr error		expr { yyerrok; }
+	|ADD expr %prec UPLUS  { $$ = CreatePT(Pos, "+", $2, NULL); }
+	|SUB expr %prec UMINUS { $$ = CreatePT(Neg, "-", $2, NULL); }
+	|NOT expr { $$ = CreatePT(Not, "!", $2, NULL); }
+	|error expr { yyerrok; }
 	
 term
 	:NUMBER { $$ = CreatePT(Num, $1, NULL, NULL); }
 	|variable
 	|procedure
 	|LPAREN expr RPAREN { $$ = $2; }
+	|LPAREN error RPAREN { yyerrok; }
 	
 %%
 

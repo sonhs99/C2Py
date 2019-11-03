@@ -8,10 +8,11 @@ ParseTree * Parser::parse(){
 	ParseTree * head;
 	yyin = fopen(File.c_str(), "r");
 	if(yyin == NULL) {
-		fprintf(stderr, "Error : file is not find\n");
+		fprintf(stderr, "Error : file not find\n");
 		return NULL;
 	}
 	if(yyparse(&head)) {
+		fclose(yyin);
         return NULL;
     }
 	fclose(yyin);

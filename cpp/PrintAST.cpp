@@ -74,8 +74,19 @@ void PrintAST::visit(BasicTypeNode & n){
 	LEVEL(level); std::cout << "< BasicType >" << std::endl;
 	LEVEL(level); std::cout << "name : " << getOp(n.type) << std::endl;
 }
-void PrintAST::visit(LoopNode & n){
-	LEVEL(level); std::cout << "< Loop >" << std::endl;
+void PrintAST::visit(WhileNode & n){
+	LEVEL(level); std::cout << "< While >" << std::endl;
+	LEVEL(level); std::cout << "cond : " << std::endl;
+	level++; n.cond->accept(*this); level--;
+	LEVEL(level); std::cout << "stmt : " << std::endl;
+	level++; n.stmt->accept(*this); level--;
+	if(n.Else != NULL){
+		LEVEL(level); std::cout << "else : " << std::endl;
+		level++; n.Else->accept(*this); level--;
+	}
+}
+void PrintAST::visit(ForNode & n){
+	LEVEL(level); std::cout << "< For >" << std::endl;
 	LEVEL(level); std::cout << "cond : " << std::endl;
 	level++; n.cond->accept(*this); level--;
 	LEVEL(level); std::cout << "stmt : " << std::endl;

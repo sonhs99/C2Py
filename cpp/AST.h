@@ -29,8 +29,8 @@ public:
 	friend class PrintAST;
 	ASTNode(const char * ep, Node * b):
 		entry(ep), block(b) {};
-	void addVar(Node * n) { defvars.push_back(n); }
-	void addFunc(Node * n) { defunc.push_back(n); }
+	void addVar(Node * n) { if(n != NULL) defvars.push_back(n); }
+	void addFunc(Node * n) { if(n != NULL) defunc.push_back(n); }
 	~ASTNode() {
 		std::for_each(defvars.begin(), defvars.end(), [](Node * n){ delete n; });
 		std::for_each(defunc.begin(), defunc.end(), [](Node * n){ delete n; });
@@ -94,8 +94,8 @@ public:
 		delete retype;
 		delete block;
 	}
-	void addArg(Node * a) { args.push_back(a); }
-	void addVar(Node * v) { vars.push_back(v); }
+	void addArg(Node * a) { if(a != NULL) args.push_back(a); }
+	void addVar(Node * v) { if(v != NULL) vars.push_back(v); }
 	void accept(Visitor & v);
 };
 
@@ -107,11 +107,11 @@ public:
 	friend class PrintAST;
 	BlockNode() {}
 	~BlockNode() { std::for_each(stmts.begin(), stmts.end(), [](Node * n){ delete n; }); }
-	void addStatement(Node * n) { stmts.push_back(n); }
+	void addStatement(Node * n) { if(n != NULL) stmts.push_back(n); }
 	void accept(Visitor & v);
 };
 
-class LoopNode : public Node {
+class WhileNode : public Node {
 private:
 	Node * cond;
 	Node * stmt;
@@ -119,9 +119,25 @@ private:
 	
 public:
 	friend class PrintAST;
-	LoopNode(Node * c, Node * s, Node * e):
+	WhileNode(Node * c, Node * s, Node * e):
 		cond(c), stmt(s), Else(e) {};
-	~LoopNode() { 
+	~WhileNode() { 
+		delete cond; delete stmt; delete Else; 
+	}
+	void accept(Visitor & v);
+};
+
+class ForNode : public Node {
+private:
+	Node * cond;
+	Node * stmt;
+	Node * Else;
+	
+public:
+	friend class PrintAST;
+	ForNode(Node * c, Node * s, Node * e):
+		cond(c), stmt(s), Else(e) {};
+	~ForNode() { 
 		delete cond; delete stmt; delete Else; 
 	}
 	void accept(Visitor & v);
@@ -143,7 +159,7 @@ public:
 		delete cond;
 		delete Else;
 	}
-	void addElif(Node * e) { elif.push_back(e); }
+	void addElif(Node * e) { if(e != NULL) elif.push_back(e); }
 	void accept(Visitor & v);
 };
 
@@ -209,7 +225,7 @@ public:
 	FunctionCallNode(const char * n):
 		name(n) {}
 	~FunctionCallNode() { std::for_each(args.begin(), args.end(), [](Node * n){ delete n; }); }
-	void addArg(Node * e) { args.push_back(e); }
+	void addArg(Node * e) { if(e != NULL) args.push_back(e); }
 	void accept(Visitor & v);
 };
 
@@ -243,7 +259,8 @@ public:
 	virtual void visit(BlockNode & n) = 0;
 	virtual void visit(TypeNode & n) = 0;
 	virtual void visit(BasicTypeNode & n) = 0;
-	virtual void visit(LoopNode & n) = 0;
+	virtual void visit(WhileNode & n) = 0;
+	virtual void visit(ForNode & n) = 0;
 	virtual void visit(IfNode & n) = 0;
 	virtual void visit(BinaryNode & n) = 0;
 	virtual void visit(UnaryNode & n) = 0;

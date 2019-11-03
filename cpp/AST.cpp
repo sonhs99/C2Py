@@ -6,7 +6,7 @@ Node * ASTGenerate(ParseTree * pt){
 	if(pt == NULL) return NULL;
 	Node * temp_a, * temp_b; 
 	switch(pt->type){
-		case Void: return new VoidNode();
+		case Void: return NULL;
 		case Nop: return new NopNode();
 		case Num: return new LiteralNumberNode(pt->data);
 		case Int:
@@ -33,10 +33,13 @@ Node * ASTGenerate(ParseTree * pt){
 			temp_a = ASTGenerate(pt->child->sibling);
 			return new BinaryNode(pt->type, ASTGenerate(pt->child), temp_a);
 		case For:
+			temp_a = ASTGenerate(pt->child->sibling->sibling);
+			temp_b = ASTGenerate(pt->child->sibling);
+			return new ForNode(ASTGenerate(pt->child), temp_b, temp_a);
 		case While:
 			temp_a = ASTGenerate(pt->child->sibling->sibling);
 			temp_b = ASTGenerate(pt->child->sibling);
-			return new LoopNode(ASTGenerate(pt->child), temp_b, temp_a);
+			return new WhileNode(ASTGenerate(pt->child), temp_b, temp_a);
 		case If:
 		case Elif:
 			temp_b = new IfNode( ASTGenerate(pt->child),
@@ -53,7 +56,7 @@ Node * ASTGenerate(ParseTree * pt){
 			return temp_b;
 		case Proc:
 			temp_b = new FunctionCallNode(pt->data);
-			for(auto temp_a = pt->child->sibling->child; temp_a != NULL; temp_a = temp_a->sibling)
+			for(auto temp_a = pt->child->child; temp_a != NULL; temp_a = temp_a->sibling)
 				((FunctionCallNode *)temp_b)->addArg(ASTGenerate(temp_a));
 			return temp_b;
 		case Func:
@@ -88,7 +91,8 @@ void TypeNode::accept(Visitor & v) { v.visit(*this); }
 void BasicTypeNode::accept(Visitor & v) { v.visit(*this); }
 void DefFunctionNode::accept(Visitor & v) { v.visit(*this); }
 void BlockNode::accept(Visitor & v) { v.visit(*this); }
-void LoopNode::accept(Visitor & v) { v.visit(*this); }
+void ForNode::accept(Visitor & v) { v.visit(*this); }
+void WhileNode::accept(Visitor & v) { v.visit(*this); }
 void BinaryNode::accept(Visitor & v) { v.visit(*this); }
 void UnaryNode::accept(Visitor & v) { v.visit(*this); }
 void LiteralNumberNode::accept(Visitor & v) { v.visit(*this); }
