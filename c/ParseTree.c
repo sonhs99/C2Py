@@ -52,19 +52,10 @@ const char * getOp(NodeKind code){
 		case Equ: return "==";
 		case NotEqu: return "!=";
 		case Not: return "!";
-		case If: return "if";
-		case Elif: return "elif";
-		case Else: return "else";
-		case While: return "While";
-		case Return: return "return";
-		case Type: return "type";
-		case Decl: return "decl";
-		case Var: return "var";
-		case Block: return "block";
-		case Param: return "param";
 		case Void: return "void";
 		case Int: return "int";
 		case Float: return "float";
+		case In : return "in";
 	}
 	return "Unknown";
 }

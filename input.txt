@@ -1,10 +1,8 @@
 mainprog main;
 function main : int
-int b, c;
 begin
-	b != 2 : b = b+1;
-	b = func(a*3, c-4)
-end
-begin
-	a = 1;
+	int b = c+;
+	func(c);
+	b = func (a*3, c-4);
+	for c in b: c = i;
 end

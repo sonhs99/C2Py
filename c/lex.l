@@ -65,4 +65,5 @@
 "//".*(\n|^) yylineno++;
 
 [ \t]+
+.		fprintf(stderr, "line (%d) : Unknown Token - %s\n", yylineno, yytext);
 %%

@@ -17,7 +17,7 @@ Node * ASTGenerate(ParseTree * pt){
 			return new TypeNode(ASTGenerate(pt->child), ASTGenerate(pt->child->sibling));
 		case Pos:
 		case Neg:
-		case Not: return new UnaryNode(pt->type, ASTGenerate(pt->child));
+		case Not: return new UnaryNode(pt->type, (temp_a = ASTGenerate(pt->child)) ? temp_a : new VoidNode());
 		case Plus:
 		case Minus:
 		case Mul:
@@ -31,7 +31,10 @@ Node * ASTGenerate(ParseTree * pt){
 		case NotEqu:
 		case In:
 			temp_a = ASTGenerate(pt->child->sibling);
-			return new BinaryNode(pt->type, ASTGenerate(pt->child), temp_a);
+			if(temp_a == NULL) temp_a = new VoidNode();
+			return new BinaryNode(pt->type, 
+								  (temp_b = ASTGenerate(pt->child)) ? temp_b : new VoidNode(),
+								  temp_a);
 		case For:
 			temp_a = ASTGenerate(pt->child->sibling->sibling);
 			temp_b = ASTGenerate(pt->child->sibling);
@@ -51,6 +54,8 @@ Node * ASTGenerate(ParseTree * pt){
 			return temp_b;
 		case Block:
 			temp_b = new BlockNode();
+			for(auto temp_a = pt->sibling; temp_a != NULL; temp_a = temp_a->sibling)
+				((BlockNode *)temp_b)->addVar(ASTGenerate(temp_a));
 			for(auto temp_a = pt->child; temp_a != NULL; temp_a = temp_a->sibling)
 				((BlockNode *)temp_b)->addStatement(ASTGenerate(temp_a));
 			return temp_b;
@@ -60,22 +65,21 @@ Node * ASTGenerate(ParseTree * pt){
 				((FunctionCallNode *)temp_b)->addArg(ASTGenerate(temp_a));
 			return temp_b;
 		case Func:
-			temp_b = new DefFunctionNode(pt->data,
-										ASTGenerate(pt->child->sibling),
-										ASTGenerate(pt->child->sibling->sibling->sibling));
+			temp_b = new DefFunctionNode(pt->data ? pt->data : "",
+										(temp_a = ASTGenerate(pt->child->sibling)) ? temp_a : new VoidNode(),
+										ASTGenerate(pt->child->sibling->sibling));
 			for(auto temp_a = pt->child->child; temp_a != NULL; temp_a = temp_a->sibling)
 				((DefFunctionNode *)temp_b)->addArg(ASTGenerate(temp_a));
-			for(auto temp_a = pt->child->sibling->sibling->child; temp_a != NULL; temp_a = temp_a->sibling)
-				((DefFunctionNode *)temp_b)->addVar(ASTGenerate(temp_a));
 			return temp_b;
 		case Param:
 		case Decl:
 			temp_b = new DefVarNode(ASTGenerate(pt->child));
 			for(auto temp_a = pt->child->sibling; temp_a != NULL; temp_a = temp_a->sibling)
-				((DefVarNode *)temp_b)->addName(temp_a->data);
+				((DefVarNode *)temp_b)->addName(temp_a->data ? temp_a->data : "",
+											   ASTGenerate(temp_a->child));
 			return temp_b;
 		case Root:
-			temp_b = new ASTNode(pt->data, ASTGenerate(pt->child->sibling->sibling));
+			temp_b = new ASTNode(pt->data ? pt->data : "");
 			for(auto temp_a = pt->child->child; temp_a != NULL; temp_a = temp_a->sibling)
 				((ASTNode *)temp_b)->addVar(ASTGenerate(temp_a));
 			for(auto temp_a = pt->child->sibling->child; temp_a != NULL; temp_a = temp_a->sibling)

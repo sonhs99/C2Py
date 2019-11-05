@@ -24,24 +24,22 @@ private:
 	std::string entry;
 	std::vector<Node *> defvars;
 	std::vector<Node *> defunc;
-	Node * block;
 public:
 	friend class PrintAST;
-	ASTNode(const char * ep, Node * b):
-		entry(ep), block(b) {};
+	ASTNode(const char * ep):
+		entry(ep) {};
 	void addVar(Node * n) { if(n != NULL) defvars.push_back(n); }
 	void addFunc(Node * n) { if(n != NULL) defunc.push_back(n); }
 	~ASTNode() {
 		std::for_each(defvars.begin(), defvars.end(), [](Node * n){ delete n; });
 		std::for_each(defunc.begin(), defunc.end(), [](Node * n){ delete n; });
-		delete block;
 	}
 	void accept(Visitor & v);
 };
 
 class DefVarNode : public Node {
 private:
-	std::vector<std::string> names;
+	std::vector<std::pair<std::string, Node *> > names;
 	Node * type;
 	
 public:
@@ -49,7 +47,7 @@ public:
 	DefVarNode(Node * t):
 		type(t) {}
 	~DefVarNode() { delete type; }
-	void addName(const char * n) { names.push_back(n); }
+	void addName(const char * n, Node * e) { names.push_back(std::make_pair(n, e)); }
 	void accept(Visitor & v);
 };
 
@@ -80,7 +78,6 @@ class DefFunctionNode : public Node {
 private:
 	std::string name;
 	std::vector<Node *> args;
-	std::vector<Node *> vars;
 	Node * retype;
 	Node * block;
 	
@@ -90,24 +87,27 @@ public:
 		name(n), retype(r), block(b) {}
 	~DefFunctionNode() {
 		std::for_each(args.begin(), args.end(), [](Node * n){ delete n; });
-		std::for_each(vars.begin(), vars.end(), [](Node * n){ delete n; });
 		delete retype;
 		delete block;
 	}
 	void addArg(Node * a) { if(a != NULL) args.push_back(a); }
-	void addVar(Node * v) { if(v != NULL) vars.push_back(v); }
 	void accept(Visitor & v);
 };
 
 class BlockNode : public Node {
 private:
 	std::vector<Node *> stmts;
+	std::vector<Node *> vars;
 	
 public:
 	friend class PrintAST;
 	BlockNode() {}
-	~BlockNode() { std::for_each(stmts.begin(), stmts.end(), [](Node * n){ delete n; }); }
+	~BlockNode() {
+		std::for_each(stmts.begin(), stmts.end(), [](Node * n){ delete n; });
+		std::for_each(vars.begin(), vars.end(), [](Node * n){ delete n; });
+	}
 	void addStatement(Node * n) { if(n != NULL) stmts.push_back(n); }
+	void addVar(Node * n) { if(n != NULL) vars.push_back(n); }
 	void accept(Visitor & v);
 };
 

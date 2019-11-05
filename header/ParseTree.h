@@ -2,7 +2,7 @@
 
 typedef enum _NodeKind {
 	Plus=0, Minus, Mul, Div, Pos, Neg, Assign,
-	Greater, EquGre, Less, EquLess, Equ, NotEqu, In, Not,
+	Greater, EquGre, Less, EquLess, Equ, NotEqu, In, Not, EOP,
 	Func, Proc, If, For, Else, While, Return, Nop, Elif,
 	List,
 	Num, Ident, Int, Float,
