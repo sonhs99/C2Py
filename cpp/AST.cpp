@@ -8,6 +8,8 @@ Node * ASTGenerate(ParseTree * pt){
 	switch(pt->type){
 		case Void: return NULL;
 		case Nop: return new NopNode();
+		case Continue: return new ContinueNode();
+		case Break: return new BreakNode();
 		case Num: return new LiteralNumberNode(pt->data);
 		case Int:
 		case Float: return new BasicTypeNode(pt->type);
@@ -106,4 +108,6 @@ void ReturnNode::accept(Visitor & v) { v.visit(*this); }
 void NopNode::accept(Visitor & v) { v.visit(*this); }
 void IfNode::accept(Visitor & v) { v.visit(*this); }
 void VoidNode::accept(Visitor & v) { v.visit(*this); }
+void ContinueNode::accept(Visitor & v) { v.visit(*this); }
+void BreakNode::accept(Visitor & v) { v.visit(*this); }
 

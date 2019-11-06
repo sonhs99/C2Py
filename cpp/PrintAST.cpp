@@ -164,3 +164,11 @@ void PrintAST::visit(NopNode & n){
 void PrintAST::visit(VoidNode & n){
 	LEVEL(level); std::cout << "< Void >" << std::endl;
 }
+
+void PrintAST::visit(BreakNode & n){
+	LEVEL(level); std::cout << "< Break >" << std::endl;
+}
+
+void PrintAST::visit(ContinueNode & n){
+	LEVEL(level); std::cout << "< Continue >" << std::endl;
+}

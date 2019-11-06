@@ -250,6 +250,16 @@ public:
 	void accept(Visitor & v);
 };
 
+class ContinueNode : public Node {
+public:
+	void accept(Visitor & v);
+};
+
+class BreakNode : public Node {
+public:
+	void accept(Visitor & v);
+};
+
 class Visitor{
 public:
 	virtual void visit(Node & n) = 0;
@@ -270,5 +280,7 @@ public:
 	virtual void visit(ReturnNode & n) = 0;
 	virtual void visit(NopNode & n) = 0;
 	virtual void visit(VoidNode & n) = 0;
+	virtual void visit(ContinueNode & n) = 0;
+	virtual void visit(BreakNode & n) = 0;
 };
 

@@ -1,4 +1,5 @@
 LOGFILE = log.txt
+INPUT = input.txt
 
 all: run.out
 
@@ -18,4 +19,4 @@ clean:
 	rm -r $(LOGFILE)
 	
 run:
-	./bin/run > $(LOGFILE)
+	./bin/run $(INPUT) > $(LOGFILE)

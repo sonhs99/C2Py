@@ -3,9 +3,13 @@
 #include "AST.h"
 #include "PrintAST.h"
 
-int main(){
-	Parser parser("input.txt");
+int main(int argc, char *argv[]){
+	if(argc < 2) {
+		printf("Usage : <executable> <filename> <option>\n");
+		return 0;
+	}
 	fflush(stdout);
+	Parser parser(argv[1]);
 	auto head = parser.parse();
 	auto AST = ASTGenerate(head);
 	//	PrintPT(head, 0);

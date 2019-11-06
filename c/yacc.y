@@ -23,8 +23,8 @@ int yyerror(struct TreeNode ** pt, char const *str) { return 0; };
 
 %token LPAREN "(" RPAREN ")" LBRACKET "[" RBRACKET "]"
 %token COMMA "," SEMICOLON ";" COLON ":" 
-%token MAINPROG FUNCTION BEG END IF
-%token ELIF ELSE NOP WHILE RETURN
+%token MAINPROG FUNCTION BEG END IF CONTINUE
+%token ELIF ELSE NOP WHILE RETURN BREAK 
 %token FOR IN INT FLOAT
 
 %type<node> program declarations identifier_list type standard_type subprograms
@@ -188,6 +188,8 @@ stmt
 	
 stmt_semi
 	:expr
+	|BREAK	{ $$ = CreatePT(Break, "break", NULL, NULL); }
+	|CONTINUE { $$ = CreatePT(Continue, "continue", NULL, NULL); }
 	|RETURN expr { $$ = CreatePT(Return, "return", $2, NULL); }
 	|NOP { $$ = CreatePT(Nop, "nop", NULL, NULL); }
 	

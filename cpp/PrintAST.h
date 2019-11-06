@@ -27,4 +27,6 @@ public:
 	void visit(ReturnNode & n);
 	void visit(NopNode & n);
 	void visit(VoidNode & n);
+	void visit(ContinueNode & n);
+	void visit(BreakNode & n);
 };

@@ -24,6 +24,8 @@
 "in"		return IN;
 "int"		return INT;
 "float"		return FLOAT;
+"continue"	return CONTINUE;
+"break"		return BREAK;
 
 "+"		return ADD;
 "-"		return SUB;
