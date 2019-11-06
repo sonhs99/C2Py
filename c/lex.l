@@ -12,7 +12,6 @@
 
 "mainprog"	return MAINPROG;
 "function"	return FUNCTION;
-"procedure"	return PROCEDURE;
 "begin"		return BEG;
 "end"		return END;
 "if"		return IF;

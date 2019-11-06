@@ -16,7 +16,7 @@ lex.yy.c: $(LEXFILE).l $(YACCFILE).tab.h
 	$(LEX) $^
 
 $(YACCFILE).tab.c $(YACCFILE).tab.h : $(YACCFILE).y
-	$(YACC) $^
+	$(YACC) $^ --report all
 	
 clean:
 	rm lex.yy.c

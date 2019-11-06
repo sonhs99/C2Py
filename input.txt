@@ -1,8 +1,8 @@
 mainprog main;
 function main : int
 begin
-	int b = c+;
+	int b = c+ ;int;
 	func(c);
 	b = func (a*3, c-4);
-	for c in b: c = i;
+	for c in b: c = i + int a;
 end

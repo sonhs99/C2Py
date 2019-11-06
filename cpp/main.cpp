@@ -5,6 +5,7 @@
 
 int main(){
 	Parser parser("input.txt");
+	fflush(stdout);
 	auto head = parser.parse();
 	auto AST = ASTGenerate(head);
 	//	PrintPT(head, 0);

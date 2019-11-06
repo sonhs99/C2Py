@@ -23,7 +23,7 @@ int yyerror(struct TreeNode ** pt, char const *str) { return 0; };
 
 %token LPAREN "(" RPAREN ")" LBRACKET "[" RBRACKET "]"
 %token COMMA "," SEMICOLON ";" COLON ":" 
-%token MAINPROG FUNCTION PROCEDURE BEG END IF
+%token MAINPROG FUNCTION BEG END IF
 %token ELIF ELSE NOP WHILE RETURN
 %token FOR IN INT FLOAT
 
@@ -82,13 +82,17 @@ declarations
 identifier_list
 	:IDENT init { $$ = CreatePT(Ident, $1, $2, NULL); }
 	|IDENT init COMMA identifier_list { $$ = CreatePT(Ident, $1, NULL, $4); }
-
+	|error {
+		fprintf(stderr, "line (%d) : \'Ident\' is missing\n", yylineno);
+		$$ = CreatePT(Void, "void", NULL, NULL);
+	}
+	
 init
 	:ASS expr { $$ = $2;}
 	| { $$ = CreatePT(Void, NULL, NULL, NULL); }
 	|ASS error {
 		fprintf(stderr, "line (%d) : \'expr\' is missing\n", yylineno);
-		$$ = CreatePT(Void, NULL, NULL, NULL); 
+		$$ = CreatePT(Void, "void", NULL, NULL); 
 	}
 	
 type
@@ -342,5 +346,6 @@ term
 	|procedure
 	|LPAREN expr RPAREN { $$ = $2; }
 	|LPAREN expr error { fprintf(stderr, "line (%d) : \')\' is required\n", yylineno); $$ = $2; }
-	
+	|type term{ fprintf(stderr, "line (%d) : \'type\' is not required\n", yylineno); $$ = $2;}
+	|type { fprintf(stderr, "line (%d) : \'term\' is required\n", yylineno); $$ = CreatePT(Void, "void", NULL, NULL);}
 %%
