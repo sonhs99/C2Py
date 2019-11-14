@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <iostream>
 
 class Visitor;
 class PrintAST;
@@ -13,7 +14,7 @@ private:
 public:
 	friend class PrintAST;
 	Node() {};
-	~Node() {};
+	virtual ~Node() {};
 	virtual void accept(Visitor & v) = 0;
 };
 

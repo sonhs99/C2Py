@@ -1,6 +1,5 @@
 #include "AST.h"
 #include <iostream>
-#include <unistd.h>
 
 Node * ASTGenerate(ParseTree * pt){
 	if(pt == NULL) return NULL;
@@ -75,7 +74,7 @@ Node * ASTGenerate(ParseTree * pt){
 			return temp_b;
 		case Param:
 		case Decl:
-			temp_b = new DefVarNode(ASTGenerate(pt->child));
+			temp_b = new DefVarNode((temp_a = ASTGenerate(pt->child)) ? temp_a : new VoidNode());
 			for(auto temp_a = pt->child->sibling; temp_a != NULL; temp_a = temp_a->sibling)
 				((DefVarNode *)temp_b)->addName(temp_a->data ? temp_a->data : "",
 											   ASTGenerate(temp_a->child));

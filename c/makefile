@@ -9,7 +9,7 @@ TARGET	= c.o
 all: $(TARGET)
 
 $(TARGET): $(CFILE)
-	$(CC) $^ -I../header
+	$(CC) $^ -I../header -g
 	ld -relocatable $(CFILE:.c=.o) -o $@
 	
 lex.yy.c: $(LEXFILE).l $(YACCFILE).tab.h

@@ -154,8 +154,10 @@ void PrintAST::visit(FunctionCallNode & n){
 }
 void PrintAST::visit(ReturnNode & n){
 	LEVEL(level); std::cout << "< Return >" << std::endl;
-	LEVEL(level); std::cout << "expr : " << std::endl;
-	level++; n.expr->accept(*this); level--;
+	if(n.expr != NULL){
+		LEVEL(level); std::cout << "expr : " << std::endl;
+		level++; n.expr->accept(*this); level--;
+	}
 }
 void PrintAST::visit(NopNode & n){
 	LEVEL(level); std::cout << "< Nop >" << std::endl;

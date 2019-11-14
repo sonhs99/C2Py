@@ -1,0 +1,155 @@
+==22264== Memcheck, a memory error detector
+==22264== Copyright (C) 2002-2017, and GNU GPL'd, by Julian Seward et al.
+==22264== Using Valgrind-3.13.0 and LibVEX; rerun with -h for copyright info
+==22264== Command: ./bin/run input.txt
+==22264== Parent PID: 20708
+==22264== 
+--22264-- 
+--22264-- Valgrind options:
+--22264--    --tool=memcheck
+--22264--    --leak-check=full
+--22264--    --log-file=memcheck.txt
+--22264--    -v
+--22264-- Contents of /proc/version:
+--22264--   Linux version 4.4.0-1096-aws (buildd@lgw01-amd64-029) (gcc version 5.4.0 20160609 (Ubuntu 5.4.0-6ubuntu1~16.04.10) ) #107-Ubuntu SMP Thu Oct 3 01:51:58 UTC 2019
+--22264-- 
+--22264-- Arch and hwcaps: AMD64, LittleEndian, amd64-cx16-lzcnt-rdtscp-sse3-avx-avx2-bmi
+--22264-- Page sizes: currently 4096, max supported 4096
+--22264-- Valgrind library directory: /usr/lib/valgrind
+--22264-- Reading syms from /workspace/C2Py/bin/run
+--22264-- Reading syms from /lib/x86_64-linux-gnu/ld-2.27.so
+--22264--   Considering /lib/x86_64-linux-gnu/ld-2.27.so ..
+--22264--   .. CRC mismatch (computed 1b7c895e wanted 2943108a)
+--22264--   Considering /usr/lib/debug/lib/x86_64-linux-gnu/ld-2.27.so ..
+--22264--   .. CRC is valid
+--22264-- Reading syms from /usr/lib/valgrind/memcheck-amd64-linux
+--22264--   Considering /usr/lib/valgrind/memcheck-amd64-linux ..
+--22264--   .. CRC mismatch (computed c25f395c wanted 0a9602a8)
+--22264--    object doesn't have a symbol table
+--22264--    object doesn't have a dynamic symbol table
+--22264-- Scheduler: using generic scheduler lock implementation.
+--22264-- Reading suppressions file: /usr/lib/valgrind/default.supp
+==22264== embedded gdbserver: reading from /tmp/vgdb-pipe-from-vgdb-to-22264-by-root-on-???
+==22264== embedded gdbserver: writing to   /tmp/vgdb-pipe-to-vgdb-from-22264-by-root-on-???
+==22264== embedded gdbserver: shared mem   /tmp/vgdb-pipe-shared-mem-vgdb-22264-by-root-on-???
+==22264== 
+==22264== TO CONTROL THIS PROCESS USING vgdb (which you probably
+==22264== don't want to do, unless you know exactly what you're doing,
+==22264== or are doing some strange experiment):
+==22264==   /usr/lib/valgrind/../../bin/vgdb --pid=22264 ...command...
+==22264== 
+==22264== TO DEBUG THIS PROCESS USING GDB: start GDB like this
+==22264==   /path/to/gdb ./bin/run
+==22264== and then give GDB the following command
+==22264==   target remote | /usr/lib/valgrind/../../bin/vgdb --pid=22264
+==22264== --pid is optional if only one valgrind process is running
+==22264== 
+--22264-- REDIR: 0x401f2f0 (ld-linux-x86-64.so.2:strlen) redirected to 0x58060901 (???)
+--22264-- REDIR: 0x401f0d0 (ld-linux-x86-64.so.2:index) redirected to 0x5806091b (???)
+--22264-- Reading syms from /usr/lib/valgrind/vgpreload_core-amd64-linux.so
+--22264--   Considering /usr/lib/valgrind/vgpreload_core-amd64-linux.so ..
+--22264--   .. CRC mismatch (computed 4b63d83e wanted 670599e6)
+--22264--    object doesn't have a symbol table
+--22264-- Reading syms from /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so
+--22264--   Considering /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so ..
+--22264--   .. CRC mismatch (computed a4b37bee wanted 8ad4dc94)
+--22264--    object doesn't have a symbol table
+==22264== WARNING: new redirection conflicts with existing -- ignoring it
+--22264--     old: 0x0401f2f0 (strlen              ) R-> (0000.0) 0x58060901 ???
+--22264--     new: 0x0401f2f0 (strlen              ) R-> (2007.0) 0x04c32db0 strlen
+--22264-- REDIR: 0x401d360 (ld-linux-x86-64.so.2:strcmp) redirected to 0x4c33ee0 (strcmp)
+--22264-- REDIR: 0x401f830 (ld-linux-x86-64.so.2:mempcpy) redirected to 0x4c374f0 (mempcpy)
+--22264-- Reading syms from /usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.26
+--22264--    object doesn't have a symbol table
+--22264-- Reading syms from /lib/x86_64-linux-gnu/libgcc_s.so.1
+--22264--    object doesn't have a symbol table
+--22264-- Reading syms from /lib/x86_64-linux-gnu/libc-2.27.so
+--22264--   Considering /lib/x86_64-linux-gnu/libc-2.27.so ..
+--22264--   .. CRC mismatch (computed b1c74187 wanted 042cc048)
+--22264--   Considering /usr/lib/debug/lib/x86_64-linux-gnu/libc-2.27.so ..
+--22264--   .. CRC is valid
+--22264-- Reading syms from /lib/x86_64-linux-gnu/libm-2.27.so
+--22264--   Considering /lib/x86_64-linux-gnu/libm-2.27.so ..
+--22264--   .. CRC mismatch (computed 7feae033 wanted b29b2508)
+--22264--   Considering /usr/lib/debug/lib/x86_64-linux-gnu/libm-2.27.so ..
+--22264--   .. CRC is valid
+--22264-- REDIR: 0x54d2c70 (libc.so.6:memmove) redirected to 0x4a2a6e0 (_vgnU_ifunc_wrapper)
+--22264-- REDIR: 0x54d1d40 (libc.so.6:strncpy) redirected to 0x4a2a6e0 (_vgnU_ifunc_wrapper)
+--22264-- REDIR: 0x54d2f50 (libc.so.6:strcasecmp) redirected to 0x4a2a6e0 (_vgnU_ifunc_wrapper)
+--22264-- REDIR: 0x54d1790 (libc.so.6:strcat) redirected to 0x4a2a6e0 (_vgnU_ifunc_wrapper)
+--22264-- REDIR: 0x54d1d70 (libc.so.6:rindex) redirected to 0x4a2a6e0 (_vgnU_ifunc_wrapper)
+--22264-- REDIR: 0x54d47c0 (libc.so.6:rawmemchr) redirected to 0x4a2a6e0 (_vgnU_ifunc_wrapper)
+--22264-- REDIR: 0x54d2de0 (libc.so.6:mempcpy) redirected to 0x4a2a6e0 (_vgnU_ifunc_wrapper)
+--22264-- REDIR: 0x54d2c10 (libc.so.6:bcmp) redirected to 0x4a2a6e0 (_vgnU_ifunc_wrapper)
+--22264-- REDIR: 0x54d1d00 (libc.so.6:strncmp) redirected to 0x4a2a6e0 (_vgnU_ifunc_wrapper)
+--22264-- REDIR: 0x54d1800 (libc.so.6:strcmp) redirected to 0x4a2a6e0 (_vgnU_ifunc_wrapper)
+--22264-- REDIR: 0x54d2d40 (libc.so.6:memset) redirected to 0x4a2a6e0 (_vgnU_ifunc_wrapper)
+--22264-- REDIR: 0x54f00f0 (libc.so.6:wcschr) redirected to 0x4a2a6e0 (_vgnU_ifunc_wrapper)
+--22264-- REDIR: 0x54d1ca0 (libc.so.6:strnlen) redirected to 0x4a2a6e0 (_vgnU_ifunc_wrapper)
+--22264-- REDIR: 0x54d1870 (libc.so.6:strcspn) redirected to 0x4a2a6e0 (_vgnU_ifunc_wrapper)
+--22264-- REDIR: 0x54d2fa0 (libc.so.6:strncasecmp) redirected to 0x4a2a6e0 (_vgnU_ifunc_wrapper)
+--22264-- REDIR: 0x54d1840 (libc.so.6:strcpy) redirected to 0x4a2a6e0 (_vgnU_ifunc_wrapper)
+--22264-- REDIR: 0x54d30e0 (libc.so.6:memcpy@@GLIBC_2.14) redirected to 0x4a2a6e0 (_vgnU_ifunc_wrapper)
+--22264-- REDIR: 0x54d1da0 (libc.so.6:strpbrk) redirected to 0x4a2a6e0 (_vgnU_ifunc_wrapper)
+--22264-- REDIR: 0x54d17c0 (libc.so.6:index) redirected to 0x4a2a6e0 (_vgnU_ifunc_wrapper)
+--22264-- REDIR: 0x54d1c70 (libc.so.6:strlen) redirected to 0x4a2a6e0 (_vgnU_ifunc_wrapper)
+--22264-- REDIR: 0x54dc6c0 (libc.so.6:memrchr) redirected to 0x4a2a6e0 (_vgnU_ifunc_wrapper)
+--22264-- REDIR: 0x54d2ff0 (libc.so.6:strcasecmp_l) redirected to 0x4a2a6e0 (_vgnU_ifunc_wrapper)
+--22264-- REDIR: 0x54d2be0 (libc.so.6:memchr) redirected to 0x4a2a6e0 (_vgnU_ifunc_wrapper)
+--22264-- REDIR: 0x54f0eb0 (libc.so.6:wcslen) redirected to 0x4a2a6e0 (_vgnU_ifunc_wrapper)
+--22264-- REDIR: 0x54d2050 (libc.so.6:strspn) redirected to 0x4a2a6e0 (_vgnU_ifunc_wrapper)
+--22264-- REDIR: 0x54d2f20 (libc.so.6:stpncpy) redirected to 0x4a2a6e0 (_vgnU_ifunc_wrapper)
+--22264-- REDIR: 0x54d2ef0 (libc.so.6:stpcpy) redirected to 0x4a2a6e0 (_vgnU_ifunc_wrapper)
+--22264-- REDIR: 0x54d47f0 (libc.so.6:strchrnul) redirected to 0x4a2a6e0 (_vgnU_ifunc_wrapper)
+--22264-- REDIR: 0x54d3040 (libc.so.6:strncasecmp_l) redirected to 0x4a2a6e0 (_vgnU_ifunc_wrapper)
+--22264-- REDIR: 0x55c23c0 (libc.so.6:__strrchr_avx2) redirected to 0x4c32730 (rindex)
+--22264-- REDIR: 0x54cb070 (libc.so.6:malloc) redirected to 0x4c2faa0 (malloc)
+--22264-- REDIR: 0x55c2590 (libc.so.6:__strlen_avx2) redirected to 0x4c32cf0 (strlen)
+--22264-- REDIR: 0x55beba0 (libc.so.6:__memcmp_avx2_movbe) redirected to 0x4c35e00 (bcmp)
+--22264-- REDIR: 0x559dd60 (libc.so.6:__strcmp_ssse3) redirected to 0x4c33da0 (strcmp)
+--22264-- REDIR: 0x55c2ad0 (libc.so.6:__memcpy_avx_unaligned_erms) redirected to 0x4c366e0 (memmove)
+--22264-- REDIR: 0x54d2590 (libc.so.6:__GI_strstr) redirected to 0x4c37760 (__strstr_sse2)
+--22264-- REDIR: 0x55c2f50 (libc.so.6:__memset_avx2_unaligned_erms) redirected to 0x4c365d0 (memset)
+--22264-- REDIR: 0x55af950 (libc.so.6:__strcpy_ssse3) redirected to 0x4c32dd0 (strcpy)
+--22264-- REDIR: 0x55c21d0 (libc.so.6:__strchrnul_avx2) redirected to 0x4c37020 (strchrnul)
+--22264-- REDIR: 0x55c2ab0 (libc.so.6:__mempcpy_avx_unaligned_erms) redirected to 0x4c37130 (mempcpy)
+--22264-- REDIR: 0x54cb950 (libc.so.6:free) redirected to 0x4c30cd0 (free)
+--22264-- REDIR: 0x4ee1590 (libstdc++.so.6:operator new(unsigned long)) redirected to 0x4c30110 (operator new(unsigned long))
+--22264-- REDIR: 0x4edf8e0 (libstdc++.so.6:operator delete(void*)) redirected to 0x4c311d0 (operator delete(void*))
+==22264== 
+==22264== HEAP SUMMARY:
+==22264==     in use at exit: 17,890 bytes in 42 blocks
+==22264==   total heap usage: 113 allocs, 71 frees, 97,970 bytes allocated
+==22264== 
+==22264== Searching for pointers to 42 not-freed blocks
+==22264== Checked 109,736 bytes
+==22264== 
+==22264== 8 bytes in 1 blocks are definitely lost in loss record 5 of 37
+==22264==    at 0x4C2FB0F: malloc (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==22264==    by 0x10B171: yylex (lex.l:55)
+==22264==    by 0x10D2CB: yyparse (yacc.tab.c:1390)
+==22264==    by 0x110099: Parser::parse() (Parser.cpp:15)
+==22264==    by 0x10FF2C: main (main.cpp:12)
+==22264== 
+==22264== 1,424 (8 direct, 1,416 indirect) bytes in 1 blocks are definitely lost in loss record 36 of 37
+==22264==    at 0x4C3017F: operator new(unsigned long) (in /usr/lib/valgrind/vgpreload_memcheck-amd64-linux.so)
+==22264==    by 0x1151D7: __gnu_cxx::new_allocator<Node*>::allocate(unsigned long, void const*) (new_allocator.h:114)
+==22264==    by 0x114CD7: std::allocator_traits<std::allocator<Node*> >::allocate(std::allocator<Node*>&, unsigned long) (alloc_traits.h:444)
+==22264==    by 0x1146DB: std::_Vector_base<Node*, std::allocator<Node*> >::_M_allocate(unsigned long) (stl_vector.h:343)
+==22264==    by 0x114082: void std::vector<Node*, std::allocator<Node*> >::_M_realloc_insert<Node* const&>(__gnu_cxx::__normal_iterator<Node**, std::vector<Node*, std::allocator<Node*> > >, Node* const&) (vector.tcc:440)
+==22264==    by 0x113CB1: std::vector<Node*, std::allocator<Node*> >::push_back(Node* const&) (stl_vector.h:1195)
+==22264==    by 0x11333F: ASTNode::addFunc(Node*) (AST.h:32)
+==22264==    by 0x110899: ASTGenerate(TreeNode*) (AST.cpp:88)
+==22264==    by 0x10FF3C: main (main.cpp:13)
+==22264== 
+==22264== LEAK SUMMARY:
+==22264==    definitely lost: 16 bytes in 2 blocks
+==22264==    indirectly lost: 1,416 bytes in 37 blocks
+==22264==      possibly lost: 0 bytes in 0 blocks
+==22264==    still reachable: 16,458 bytes in 3 blocks
+==22264==         suppressed: 0 bytes in 0 blocks
+==22264== Reachable blocks (those to which a pointer was found) are not shown.
+==22264== To see them, rerun with: --leak-check=full --show-leak-kinds=all
+==22264== 
+==22264== ERROR SUMMARY: 2 errors from 2 contexts (suppressed: 0 from 0)
+==22264== ERROR SUMMARY: 2 errors from 2 contexts (suppressed: 0 from 0)

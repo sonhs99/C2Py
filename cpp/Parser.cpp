@@ -7,7 +7,6 @@ extern "C" FILE *yyin;
 ParseTree * Parser::parse(){
 	ParseTree * head = NULL;
 	yyin = fopen(File.c_str(), "r");
-	printf("=================Parse Start===============\n");
 	if(yyin == NULL) {
 		fprintf(stderr, "Error : file not find\n");
 		return NULL;

@@ -25,12 +25,12 @@ int yyerror(struct TreeNode ** pt, char const *str) { return 0; };
 %token COMMA "," SEMICOLON ";" COLON ":" 
 %token MAINPROG FUNCTION BEG END IF CONTINUE
 %token ELIF ELSE NOP WHILE RETURN BREAK 
-%token FOR IN INT FLOAT
+%token FOR IN INT FLOAT ARROW
 
 %type<node> program declarations identifier_list type standard_type subprograms
 %type<node> subprogram subprogram_head args params block stmts stmt
 %type<node> if elif else while for procedure variable exprs expr
-%type<node> expr_list term stmt_semi init
+%type<node> expr_list term stmt_semi init param
 
 %parse-param {
 	struct TreeNode ** pt
@@ -40,21 +40,24 @@ int yyerror(struct TreeNode ** pt, char const *str) { return 0; };
 program
 	:MAINPROG IDENT SEMICOLON declarations subprograms{
 		$$ = CreatePT(Root, $2, 
-			CreatePT(List, "list", $4, $5)
+			CreatePT(List, "list", $4, 
+			CreatePT(List, "list", $5, NULL))
 		, NULL);
 		*pt = $$;
 	}
 	|MAINPROG error SEMICOLON declarations subprograms{
 		fprintf(stderr, "line (%d) : \'Ident\' is missing\n", yylineno);
 		$$ = CreatePT(Root, NULL, 
-			CreatePT(List, "list", $4, $5)
+			CreatePT(List, "list", $4,
+			CreatePT(List, "list", $5, NULL))
 		, NULL);
 		*pt = $$;
 	}
 	|MAINPROG IDENT error declarations subprograms{
 		fprintf(stderr, "line (%d) : \';\' is missing\n", yylineno);
 		$$ = CreatePT(Root, $2, 
-			CreatePT(List, "list", $4, $5)
+			CreatePT(List, "list", $4,
+			CreatePT(List, "list", $5, NULL))
 		, NULL);
 		*pt = $$;
 	}
@@ -62,7 +65,8 @@ program
 		fprintf(stderr, "line (%d) : \'Ident\' is missing\n", yylineno);
 		fprintf(stderr, "line (%d) : \';\' is missing\n", yylineno);
 		$$ = CreatePT(Root, NULL, 
-			CreatePT(List, "list", $3, $4)
+			CreatePT(List, "list", $3,
+			CreatePT(List, "list", $4, NULL))
 		, NULL);
 		*pt = $$;
 	}
@@ -106,13 +110,41 @@ type
 		$1->sibling = CreatePT(Num, $3, NULL, NULL);
 		$$ = CreatePT(Type, "type", $1, NULL);
 	}
+	| standard_type LBRACKET error {
+		fprintf(stderr, "line (%d) : \'NUMBER\' is missing\n", yylineno);
+		fprintf(stderr, "line (%d) : \']\' is missing\n", yylineno);
+		$1->sibling = CreatePT(Void, "void", NULL, NULL);
+		$$ = CreatePT(Type, "type", $1, NULL);
+	}
+	| standard_type LBRACKET error RBRACKET {
+		fprintf(stderr, "line (%d) : \'NUMBER\' is missing\n", yylineno);
+		$1->sibling = CreatePT(Void, "void", NULL, NULL);
+		$$ = CreatePT(Type, "type", $1, NULL);
+	}
+	| standard_type NUMBER RBRACKET{
+		fprintf(stderr, "line (%d) : \'[\' is missing\n", yylineno);
+		$1->sibling = CreatePT(Num, $2, NULL, NULL);
+		$$ = CreatePT(Type, "type", $1, NULL);
+	}
+	| standard_type NUMBER error{
+		fprintf(stderr, "line (%d) : \'[\' is missing\n", yylineno);
+		fprintf(stderr, "line (%d) : \']\' is missing\n", yylineno);
+		$1->sibling = CreatePT(Num, $2, NULL, NULL);
+		$$ = CreatePT(Type, "type", $1, NULL);
+	}
+	| standard_type RBRACKET{
+		fprintf(stderr, "line (%d) : \'[\' is missing\n", yylineno);
+		fprintf(stderr, "line (%d) : \'NUMBER\' is missing\n", yylineno);
+		$$ = CreatePT(Type, "type", $1, NULL);
+	}
+	
 	
 standard_type
 	:INT { $$ = CreatePT(Int, "int", NULL, NULL); }
 	|FLOAT { $$ = CreatePT(Float, "float", NULL, NULL); }
 	
 subprograms
-	:subprogram subprograms {$$ = CreatePT(List, "list", $1, $2); }
+	:subprogram subprograms {$1->sibling = $2; $$ = $1; }
 	| { $$ = CreatePT(Void, "void", NULL, NULL); }
 	
 subprogram
@@ -122,12 +154,23 @@ subprogram
 	}
 
 subprogram_head
-	:FUNCTION IDENT args COLON standard_type {
+	:FUNCTION IDENT args COLON type {
 		$3->sibling = $5;
 		$$ = CreatePT(Func, $2, $3, NULL);
 	}
-	|FUNCTION error args COLON standard_type {
+	|FUNCTION error args COLON type {
 		fprintf(stderr, "line (%d) : \'Ident\' is missing\n", yylineno);
+		$3->sibling = $5;
+		$$ = CreatePT(Func, NULL, $3, NULL);
+	}
+	|FUNCTION IDENT args error type {
+		fprintf(stderr, "line (%d) : \':\' is missing\n", yylineno);
+		$3->sibling = $5;
+		$$ = CreatePT(Func, NULL, $3, NULL);
+	}
+	|FUNCTION error args error type {
+		fprintf(stderr, "line (%d) : \'Ident\' is missing\n", yylineno);
+		fprintf(stderr, "line (%d) : \':\' is missing\n", yylineno);
 		$3->sibling = $5;
 		$$ = CreatePT(Func, NULL, $3, NULL);
 	}
@@ -150,20 +193,32 @@ args
 	| { $$ = CreatePT(Void, "void", NULL, NULL); }
 	
 params
-	:identifier_list COLON type { $3->sibling = $1; $$ = CreatePT(Param, "param", $3,NULL);}
-	|identifier_list error type { 
-		fprintf(stderr, "line (%d) : \':\' is missing\n", yylineno);
-		$3->sibling = $1; $$ = CreatePT(Param, "param", $3, NULL);
-	}
-	|identifier_list COLON type SEMICOLON params { 
-		$3->sibling = $1;
-		$$ = CreatePT(Param, "param", $3, $5); 
-	}
-	|identifier_list error type SEMICOLON params{ 
-		fprintf(stderr, "line (%d) : \':\' is missing\n", yylineno);
-		$3->sibling = $1; $$ = CreatePT(Param, "param", $3, $5);
-	}
+	:param { $$ = $1; }
+	|param COMMA params {
+		if($1 != NULL){$1->sibling = $3; $$ = $1;}
+		else $$ = $3;	
+		}
 	
+param
+	:IDENT COLON type {
+		$3->sibling = CreatePT(Ident, $1, NULL, NULL);
+		$$ = CreatePT(Param, "param", $3,NULL);
+	}
+	|IDENT error type {
+		fprintf(stderr, "line (%d) : \':\' is missing\n", yylineno);
+		$3->sibling = CreatePT(Ident, $1, NULL, NULL);
+		$$ = CreatePT(Param, "param", $3, NULL);
+	}
+	|IDENT COLON IDENT {
+		fprintf(stderr, "line (%d) : \'type\' is required\n", yylineno);
+		$$ = CreatePT(Param, "param", CreatePT(Void, "void", NULL, CreatePT(Ident, $1, NULL, NULL)), NULL);
+	}
+	|IDENT COLON type error {
+		fprintf(stderr, "line (%d) : This is temporary message\n", yylineno);
+		$3->sibling = CreatePT(Ident, $1, NULL, NULL);
+		$$ = CreatePT(Param, "param", $3,NULL);
+	}
+
 block
 	:BEG declarations stmts END{ 
 		$$ = CreatePT(Block, "block", $3, $2); 
@@ -174,12 +229,14 @@ block
 	}
 
 stmts
-	:stmt stmts{ $1->sibling = $2; $$ = $1; }
+	:stmt stmts{ if($1 != NULL) {$1->sibling = $2; $$ = $1;}
+				else $$ = $2;}
 	| { $$ = NULL; }
 	
 stmt
 	:stmt_semi SEMICOLON { $$ = $1; }
 	|stmt_semi error { fprintf(stderr, "line (%d) : \';\' is missing\n", yylineno);}
+	|error SEMICOLON { fprintf(stderr, "line (%d) : \'stmt\' is missing\n", yylineno); $$ = NULL;}
 	|block
 	|if
 	|while
@@ -191,6 +248,10 @@ stmt_semi
 	|BREAK	{ $$ = CreatePT(Break, "break", NULL, NULL); }
 	|CONTINUE { $$ = CreatePT(Continue, "continue", NULL, NULL); }
 	|RETURN expr { $$ = CreatePT(Return, "return", $2, NULL); }
+	|RETURN error { 
+		fprintf(stderr, "line (%d) : \'expr\' is missing\n", yylineno);
+		$$ = CreatePT(Return, "return", CreatePT(Void, "void", NULL, NULL), NULL);
+		}
 	|NOP { $$ = CreatePT(Nop, "nop", NULL, NULL); }
 	
 if
@@ -348,6 +409,6 @@ term
 	|procedure
 	|LPAREN expr RPAREN { $$ = $2; }
 	|LPAREN expr error { fprintf(stderr, "line (%d) : \')\' is required\n", yylineno); $$ = $2; }
-	|type term{ fprintf(stderr, "line (%d) : \'type\' is not required\n", yylineno); $$ = $2;}
-	|type { fprintf(stderr, "line (%d) : \'term\' is required\n", yylineno); $$ = CreatePT(Void, "void", NULL, NULL);}
+	|type term{ fprintf(stderr, "line (%d) : \'type\' is not required\n", yylineno); DeletePT($1); $$ = $2;}
+	|type { fprintf(stderr, "line (%d) : \'term\' is required\n", yylineno); DeletePT($1); $$ = CreatePT(Void, "void", NULL, NULL);}
 %%
