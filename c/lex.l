@@ -49,7 +49,6 @@
 "[" 	return LBRACKET;
 "]" 	return RBRACKET;
 
-"->"	return ARROW;
 \n 		yylineno++;
 
 [A-Za-z][A-Za-z0-9]*		{

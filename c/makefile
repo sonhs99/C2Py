@@ -24,3 +24,4 @@ clean:
 	rm $(YACCFILE).tab.c
 	rm $(CFILE:.c=.o)
 	rm $(TARGET)
+	rm $(YACCFILE).output

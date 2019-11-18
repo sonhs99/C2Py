@@ -1,13 +1,10 @@
 mainprog main;
-function main(argv:int], argc:int3) : float
+function main(argv:int, argc:int) : float
 begin
-	int b = c+ ;
-	func(c);
-	int c = d;
-	b = func (a*3, c-4);
-	for c in b: c = i + a;
+	int b = c + d() +;
+	if a == c : return 1;
 end
 function asdf : int
 begin
-	return asdf 5];
+	return function
 end

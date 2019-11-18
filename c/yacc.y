@@ -20,16 +20,17 @@ int yyerror(struct TreeNode ** pt, char const *str) { return 0; };
 %left ADD SUB
 %left MUL DIV
 %nonassoc UMINUS UPLUS NOT
+%left LBRACKET LPAREN
 
 %token LPAREN "(" RPAREN ")" LBRACKET "[" RBRACKET "]"
 %token COMMA "," SEMICOLON ";" COLON ":" 
 %token MAINPROG FUNCTION BEG END IF CONTINUE
 %token ELIF ELSE NOP WHILE RETURN BREAK 
-%token FOR IN INT FLOAT ARROW
+%token FOR IN INT FLOAT
 
 %type<node> program declarations identifier_list type standard_type subprograms
 %type<node> subprogram subprogram_head args params block stmts stmt
-%type<node> if elif else while for procedure variable exprs expr
+%type<node> if elif else while for exprs expr ret_expr
 %type<node> expr_list term stmt_semi init param
 
 %parse-param {
@@ -94,10 +95,6 @@ identifier_list
 init
 	:ASS expr { $$ = $2;}
 	| { $$ = CreatePT(Void, NULL, NULL, NULL); }
-	|ASS error {
-		fprintf(stderr, "line (%d) : \'expr\' is missing\n", yylineno);
-		$$ = CreatePT(Void, "void", NULL, NULL); 
-	}
 	
 type
 	: standard_type { $$ = CreatePT(Type, "type", $1, NULL); }
@@ -209,7 +206,7 @@ param
 		$3->sibling = CreatePT(Ident, $1, NULL, NULL);
 		$$ = CreatePT(Param, "param", $3, NULL);
 	}
-	|IDENT COLON IDENT {
+	|IDENT COLON error {
 		fprintf(stderr, "line (%d) : \'type\' is required\n", yylineno);
 		$$ = CreatePT(Param, "param", CreatePT(Void, "void", NULL, CreatePT(Ident, $1, NULL, NULL)), NULL);
 	}
@@ -235,24 +232,26 @@ stmts
 	
 stmt
 	:stmt_semi SEMICOLON { $$ = $1; }
-	|stmt_semi error { fprintf(stderr, "line (%d) : \';\' is missing\n", yylineno);}
-	|error SEMICOLON { fprintf(stderr, "line (%d) : \'stmt\' is missing\n", yylineno); $$ = NULL;}
+	|stmt_semi error { fprintf(stderr, "line (%d) : \';\' is missing\n", yylineno); $$ = $1;}
 	|block
 	|if
 	|while
 	|for
 	
-	
 stmt_semi
 	:expr
 	|BREAK	{ $$ = CreatePT(Break, "break", NULL, NULL); }
 	|CONTINUE { $$ = CreatePT(Continue, "continue", NULL, NULL); }
-	|RETURN expr { $$ = CreatePT(Return, "return", $2, NULL); }
-	|RETURN error { 
-		fprintf(stderr, "line (%d) : \'expr\' is missing\n", yylineno);
-		$$ = CreatePT(Return, "return", CreatePT(Void, "void", NULL, NULL), NULL);
-		}
+	|RETURN ret_expr { $$ = CreatePT(Return, "return", $2, NULL); }
 	|NOP { $$ = CreatePT(Nop, "nop", NULL, NULL); }
+	
+ret_expr
+	:expr
+	| { $$ = CreatePT(Void, "void", NULL, NULL); }
+	|error {
+		fprintf(stderr, "line (%d) : \'expr\' is required\n", yylineno);
+		$$ = CreatePT(Void, "void", NULL, NULL);
+		}
 	
 if
 	: IF expr COLON stmt elif else{
@@ -312,21 +311,6 @@ for
 			CreatePT(In, "in", $2, $6),
 			NULL);
 	}
-	
-variable
-	:IDENT { $$ = CreatePT(Var, $1, NULL, NULL); }
-	|IDENT LBRACKET expr RBRACKET { $$ = CreatePT(Var, $1, $3, NULL); }
-	|IDENT LBRACKET expr error { 
-		fprintf(stderr, "line (%d) : \']\' is required\n", yylineno);
-		$$ = CreatePT(Var, $1, $3, NULL);
-	}
-	
-procedure
-	:IDENT LPAREN expr_list RPAREN { $$ = CreatePT(Proc, $1, $3, NULL); }
-	|IDENT LPAREN expr_list error {
-		fprintf(stderr, "line (%d) : \')\' is required\n", yylineno);
-		$$ = CreatePT(Proc, $1, $3, NULL);
-	}
 
 expr_list
 	:exprs { $$ = CreatePT(List, "List", $1, NULL); }
@@ -354,61 +338,24 @@ expr
 	|expr MUL		expr { $1->sibling = $3; $$ = CreatePT(Mul, "*", $1, NULL); }
 	|expr DIV		expr { $1->sibling = $3; $$ = CreatePT(Div, "/", $1, NULL); }
 	|expr IN		expr { $1->sibling = $3; $$ = CreatePT(In, "in", $1, NULL); }
+	|expr LBRACKET	expr RBRACKET { $1->sibling = $3; $$ = CreatePT(Array, "[]", $1, NULL); }
+	|expr LPAREN expr_list RPAREN { $1->sibling = $3; $$ = CreatePT(Proc, NULL, $1, NULL); }
 	|ADD expr %prec UPLUS  { $$ = CreatePT(Pos, "+", $2, NULL); }
 	|SUB expr %prec UMINUS { $$ = CreatePT(Neg, "-", $2, NULL); }
 	|NOT expr { $$ = CreatePT(Not, "!", $2, NULL); }
-	|expr ASS	error { 
-		fprintf(stderr, "line (%d) : \'expr\' is required\n", yylineno);
-		$1->sibling =  CreatePT(Void, "void", NULL, NULL); $$ = CreatePT(Assign, "=", $1, NULL); }
-	|expr GREATER	error { 
-		fprintf(stderr, "line (%d) : \'expr\' is required\n", yylineno);
-		$1->sibling =  CreatePT(Void, "void", NULL, NULL); $$ = CreatePT(Greater, "<", $1, NULL); }
-	|expr EQUGRE	error { 
-		fprintf(stderr, "line (%d) : \'expr\' is required\n", yylineno);
-		$1->sibling =  CreatePT(Void, "void", NULL, NULL); $$ = CreatePT(EquGre, "<=", $1, NULL); }
-	|expr LESS		error { 
-		fprintf(stderr, "line (%d) : \'expr\' is required\n", yylineno);
-		$1->sibling = CreatePT(Void, "void", NULL, NULL); $$ = CreatePT(Less, ">", $1, NULL); }
-	|expr EQULESS	error { 
-		fprintf(stderr, "line (%d) : \'expr\' is required\n", yylineno);
-		$1->sibling = CreatePT(Void, "void", NULL, NULL); $$ = CreatePT(EquLess, ">=", $1, NULL); }
-	|expr EQUAL		error { 
-		fprintf(stderr, "line (%d) : \'expr\' is required\n", yylineno);
-		$1->sibling = CreatePT(Void, "void", NULL, NULL); $$ = CreatePT(Equ, "==", $1, NULL); }
-	|expr NOTEQU	error {
-		fprintf(stderr, "line (%d) : \'expr\' is required\n", yylineno);
-		$1->sibling = CreatePT(Void, "void", NULL, NULL); $$ = CreatePT(NotEqu, "!=", $1, NULL); }
-	|expr ADD		error { 
-		fprintf(stderr, "line (%d) : \'expr\' is required\n", yylineno);
-		$1->sibling = CreatePT(Void, "void", NULL, NULL); $$ = CreatePT(Plus, "+", $1, NULL); }
-	|expr SUB		error { 
-		fprintf(stderr, "line (%d) : \'expr\' is required\n", yylineno);
-		$1->sibling = CreatePT(Void, "void", NULL, NULL); $$ = CreatePT(Minus, "-", $1, NULL); }
-	|expr MUL		error { 
-		fprintf(stderr, "line (%d) : \'expr\' is required\n", yylineno);
-		$1->sibling = CreatePT(Void, "void", NULL, NULL); $$ = CreatePT(Mul, "*", $1, NULL); }
-	|expr DIV		error { 
-		fprintf(stderr, "line (%d) : \'expr\' is required\n", yylineno);
-		$1->sibling = CreatePT(Void, "void", NULL, NULL); $$ = CreatePT(Div, "/", $1, NULL); }
-	|expr IN		error { 
-		fprintf(stderr, "line (%d) : \'expr\' is required\n", yylineno);
-		$1->sibling =  CreatePT(Void, "void", NULL, NULL); $$ = CreatePT(In, "in", $1, NULL); }
-	|ADD error %prec UPLUS  { 
-		fprintf(stderr, "line (%d) : \'expr\' is required\n", yylineno);
-		$$ = CreatePT(Pos, "+", CreatePT(Void, "void", NULL, NULL), NULL); }
-	|SUB error %prec UMINUS { 
-		fprintf(stderr, "line (%d) : \'expr\' is required\n", yylineno);
-		$$ = CreatePT(Neg, "-", CreatePT(Void, "void", NULL, NULL), NULL); }
-	|NOT error { 
-		fprintf(stderr, "line (%d) : \'expr\' is required\n", yylineno);
-		$$ = CreatePT(Not, "!", CreatePT(Void, "void", NULL, NULL), NULL); }
+	|expr LBRACKET	expr error { 
+		fprintf(stderr, "line (%d) : \']\' is required\n", yylineno);
+		$1->sibling =  $3; $$ = CreatePT(Array, "[]", $1, NULL); }
+	|expr LPAREN expr_list error {
+		fprintf(stderr, "line (%d) : \')\' is required\n", yylineno);
+		$1->sibling = $3;
+		$$ = CreatePT(Proc, NULL, $1, NULL); 
+	}	
 	
 term
 	:NUMBER { $$ = CreatePT(Num, $1, NULL, NULL); }
-	|variable
-	|procedure
+	|IDENT { $$ = CreatePT(Var, $1, NULL, NULL); }
 	|LPAREN expr RPAREN { $$ = $2; }
 	|LPAREN expr error { fprintf(stderr, "line (%d) : \')\' is required\n", yylineno); $$ = $2; }
-	|type term{ fprintf(stderr, "line (%d) : \'type\' is not required\n", yylineno); DeletePT($1); $$ = $2;}
-	|type { fprintf(stderr, "line (%d) : \'term\' is required\n", yylineno); DeletePT($1); $$ = CreatePT(Void, "void", NULL, NULL);}
+	|error { fprintf(stderr, "line (%d) : \'term\' is required\n", yylineno); $$ = CreatePT(Void, "void", NULL, NULL);}
 %%

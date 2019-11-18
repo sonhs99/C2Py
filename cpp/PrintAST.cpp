@@ -137,15 +137,12 @@ void PrintAST::visit(LiteralNumberNode & n){
 void PrintAST::visit(VariableNode & n){
 	LEVEL(level); std::cout << "< Variable >" << std::endl;
 	LEVEL(level); std::cout << "name : " << n.name << std::endl;
-	if(n.expr != NULL){
-		LEVEL(level); std::cout << "expr : " <<  std::endl;
-		level++; n.expr->accept(*this); level--;
-	}
 }
 void PrintAST::visit(FunctionCallNode & n){
 	int i = 0;
 	LEVEL(level); std::cout << "< FunctionCall >" << std::endl;
-	LEVEL(level); std::cout << "name : " << n.name << std::endl;
+	LEVEL(level); std::cout << "name : " << std::endl;
+	level++; n.name->accept(*this);level--;
 	LEVEL(level); std::cout << "args : " << std::endl;
 	level++; std::for_each(n.args.begin(), n.args.end(), [=, &i](Node * n){ 
 		LEVEL(level - 1); std::cout << "[ " << i << " ]" << std::endl;

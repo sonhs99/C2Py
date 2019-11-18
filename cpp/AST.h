@@ -206,26 +206,25 @@ public:
 class VariableNode : public Node {
 private:
 	std::string name;
-	Node * expr;
 	
 public:
 	friend class PrintAST;
-	VariableNode(const char * n, Node * e):
-		name(n), expr(e) {};
-	~VariableNode() { delete expr; }
+	VariableNode(const char * n):
+		name(n) {};
+	~VariableNode() { }
 	void accept(Visitor & v);
 };
 
 class FunctionCallNode : public Node {
 private:
-	std::string name;
+	Node * name;
 	std::vector<Node *> args;
 	
 public:
 	friend class PrintAST;
-	FunctionCallNode(const char * n):
+	FunctionCallNode(Node * n):
 		name(n) {}
-	~FunctionCallNode() { std::for_each(args.begin(), args.end(), [](Node * n){ delete n; }); }
+	~FunctionCallNode() { std::for_each(args.begin(), args.end(), [](Node * n){ delete n; }); delete name; }
 	void addArg(Node * e) { if(e != NULL) args.push_back(e); }
 	void accept(Visitor & v);
 };

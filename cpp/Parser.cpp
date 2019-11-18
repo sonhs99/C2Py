@@ -11,7 +11,8 @@ ParseTree * Parser::parse(){
 		fprintf(stderr, "Error : file not find\n");
 		return NULL;
 	}
-	if(yyparse(&head)) {
+	int i = yyparse(&head); // PrintPT(head, 0);
+	if(i) {
 		fclose(yyin);
         return NULL;
     }

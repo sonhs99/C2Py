@@ -12,13 +12,14 @@ Node * ASTGenerate(ParseTree * pt){
 		case Num: return new LiteralNumberNode(pt->data);
 		case Int:
 		case Float: return new BasicTypeNode(pt->type);
-		case Var: return new VariableNode(pt->data,ASTGenerate(pt->child));
+		case Var: return new VariableNode(pt->data);
 		case Return: return new ReturnNode(ASTGenerate(pt->child));
 		case Type:
 			return new TypeNode(ASTGenerate(pt->child), ASTGenerate(pt->child->sibling));
 		case Pos:
 		case Neg:
-		case Not: return new UnaryNode(pt->type, (temp_a = ASTGenerate(pt->child)) ? temp_a : new VoidNode());
+		case Not:
+			return new UnaryNode(pt->type, (temp_a = ASTGenerate(pt->child)) ? temp_a : new VoidNode());
 		case Plus:
 		case Minus:
 		case Mul:
@@ -31,6 +32,7 @@ Node * ASTGenerate(ParseTree * pt){
 		case Equ:
 		case NotEqu:
 		case In:
+		case Array:
 			temp_a = ASTGenerate(pt->child->sibling);
 			if(temp_a == NULL) temp_a = new VoidNode();
 			return new BinaryNode(pt->type, 
@@ -61,8 +63,8 @@ Node * ASTGenerate(ParseTree * pt){
 				((BlockNode *)temp_b)->addStatement(ASTGenerate(temp_a));
 			return temp_b;
 		case Proc:
-			temp_b = new FunctionCallNode(pt->data);
-			for(auto temp_a = pt->child->child; temp_a != NULL; temp_a = temp_a->sibling)
+			temp_b = new FunctionCallNode(ASTGenerate(pt->child));
+			for(auto temp_a = pt->child->sibling->child; temp_a != NULL; temp_a = temp_a->sibling)
 				((FunctionCallNode *)temp_b)->addArg(ASTGenerate(temp_a));
 			return temp_b;
 		case Func:

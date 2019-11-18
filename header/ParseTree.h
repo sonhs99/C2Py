@@ -1,7 +1,7 @@
 #pragma once
 
 typedef enum _NodeKind {
-	Plus=0, Minus, Mul, Div, Pos, Neg, Assign,
+	Plus=0, Minus, Mul, Div, Pos, Neg, Assign, Array,
 	Greater, EquGre, Less, EquLess, Equ, NotEqu, In, Not,
 	Func, Proc, If, For, Else, While, Return, Nop, Elif, Break, Continue,
 	List,

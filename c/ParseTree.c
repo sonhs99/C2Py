@@ -32,7 +32,7 @@ void PrintPT(ParseTree * head, int level){
 	if(head->type == Root) printf("< / : %s >\n", (char*)(head->data));
 	else if(head->type == Func) printf("< function : %s >\n", (char*)(head->data));
 	else if(head->type == Var) printf("< variable : %s >\n", (char*)(head->data));
-	else if(head->type == Proc) printf("< funcCall : %s >\n", (char*)(head->data));
+	else if(head->type == Proc) printf("< funcCall >\n");
 	else printf("< %s >\n", head->data);
 	PrintPT(head->child, level + 1);
 	PrintPT(head->sibling, level);
@@ -56,6 +56,7 @@ const char * getOp(NodeKind code){
 		case Int: return "int";
 		case Float: return "float";
 		case In : return "in";
+		case Array: return "[]";
 	}
 	return "Unknown";
 }
