@@ -15,7 +15,7 @@ Node * ASTGenerate(ParseTree * pt){
 		case Var: return new VariableNode(pt->data);
 		case Return: return new ReturnNode(ASTGenerate(pt->child));
 		case Type:
-			return new TypeNode(ASTGenerate(pt->child), ASTGenerate(pt->child->sibling));
+			return new TypeNode((temp_a = ASTGenerate(pt->child)) ? temp_a : new VoidNode() , ASTGenerate(pt->child->sibling));
 		case Pos:
 		case Neg:
 		case Not:

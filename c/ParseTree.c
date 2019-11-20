@@ -19,8 +19,7 @@ void DeletePT(ParseTree * head){
 	if(head->type == Ident
 	  || head->type == Num
 	  || head->type == Func
-	  || head->type == Var
-	  || head->type == Proc) free(head->data);
+	  || head->type == Var) free(head->data);
 	DeletePT(head->sibling);
 	DeletePT(head->child);
 	free(head);

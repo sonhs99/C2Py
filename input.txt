@@ -1,7 +1,8 @@
 mainprog main;
-function main(argv:int, argc:int) : float
+function main(argv:int4[5], argc:int) : float
 begin
 	int b = c + d() +;
+	a = 2;
 	if a == c : return 1;
 end
 function asdf : int

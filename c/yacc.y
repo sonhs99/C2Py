@@ -135,10 +135,13 @@ type
 		$$ = CreatePT(Type, "type", $1, NULL);
 	}
 	
-	
 standard_type
 	:INT { $$ = CreatePT(Int, "int", NULL, NULL); }
 	|FLOAT { $$ = CreatePT(Float, "float", NULL, NULL); }
+	| error error {
+		fprintf(stderr, "line (%d) : \'type\' is required\n", yylineno);
+		$$ = CreatePT(Void, "void", NULL, NULL);
+	}
 	
 subprograms
 	:subprogram subprograms {$1->sibling = $2; $$ = $1; }
@@ -206,15 +209,7 @@ param
 		$3->sibling = CreatePT(Ident, $1, NULL, NULL);
 		$$ = CreatePT(Param, "param", $3, NULL);
 	}
-	|IDENT COLON error {
-		fprintf(stderr, "line (%d) : \'type\' is required\n", yylineno);
-		$$ = CreatePT(Param, "param", CreatePT(Void, "void", NULL, CreatePT(Ident, $1, NULL, NULL)), NULL);
-	}
-	|IDENT COLON type error {
-		fprintf(stderr, "line (%d) : This is temporary message\n", yylineno);
-		$3->sibling = CreatePT(Ident, $1, NULL, NULL);
-		$$ = CreatePT(Param, "param", $3,NULL);
-	}
+	
 
 block
 	:BEG declarations stmts END{ 
