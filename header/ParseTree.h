@@ -1,12 +1,12 @@
 #pragma once
 
 typedef enum _NodeKind {
-	Plus=0, Minus, Mul, Div, Pos, Neg, Assign,
+	Plus=0, Minus, Mul, Div, Pos, Neg, Assign, Array,
 	Greater, EquGre, Less, EquLess, Equ, NotEqu, In, Not,
-	Func, Proc, If, For, Else, While, Return, Nop, 
-	Elif, Elifs, Funcs, Params,
+	Func, Proc, If, For, Else, While, Return, Nop, Elif, Break, Continue,
+	List,
 	Num, Ident, Int, Float,
-	Root, Void, Type, Decl, Decls, Var, Block, Param
+	Root, Void, Type, Decl, Var, Block, Param
 } NodeKind;
 
 typedef struct TreeNode{

@@ -12,16 +12,14 @@ void PrintAST::visit(ASTNode & n){
 	LEVEL(level); std::cout << "Entry Point : " << n.entry << std::endl;
 	LEVEL(level); std::cout << "defvar : " << std::endl;
 	level++; std::for_each(n.defvars.begin(), n.defvars.end(), [=, &i](Node * n){ 
-		LEVEL(level); std::cout << "[ " << i << " ]" << std::endl;
+		LEVEL(level - 1); std::cout << "[ " << i << " ]" << std::endl;
 		n->accept(*this); i++;
 	} ); level--; i = 0;
 	LEVEL(level); std::cout << "defunc : " << std::endl;
 	level++; std::for_each(n.defunc.begin(), n.defunc.end(), [=, &i](Node * n){ 
-		LEVEL(level); std::cout << "[ " << i << " ]" << std::endl;
+		LEVEL(level - 1); std::cout << "[ " << i << " ]" << std::endl;
 		n->accept(*this); i++;
 	} ); level--;
-	LEVEL(level); std::cout << "block : " << std::endl;
-	level++; n.block->accept(*this); level--;
 }
 void PrintAST::visit(DefVarNode & n){
 	int i = 0;
@@ -29,8 +27,13 @@ void PrintAST::visit(DefVarNode & n){
 	LEVEL(level); std::cout << "type : " << std::endl;
 	level++; n.type->accept(*this); level--;
 	LEVEL(level); std::cout << "names : " << std::endl;
-	level++; std::for_each(n.names.begin(), n.names.end(), [=, &i](std::string n){ 
-		LEVEL(level); std::cout << "[ " << i << " ] : " << n << std::endl; i++;
+	level++; std::for_each(n.names.begin(), n.names.end(), [=, &i](auto n){ 
+		LEVEL(level); std::cout << "[ " << i << " ]" << std::endl;
+		LEVEL(level); std::cout << "name : " << n.first << std::endl;
+		if(n.second != NULL) {
+			LEVEL(level); std::cout << "init : " << std::endl;
+			level++; n.second->accept(*this); level--; i++;
+		}
 	} ); level--;
 }
 void PrintAST::visit(DefFunctionNode & n){
@@ -41,12 +44,7 @@ void PrintAST::visit(DefFunctionNode & n){
 	level++; n.retype->accept(*this); level--;
 	LEVEL(level); std::cout << "args : " << std::endl;
 	level++; std::for_each(n.args.begin(), n.args.end(), [=, &i](Node * n){ 
-		LEVEL(level); std::cout << "[ " << i << " ]" << std::endl;
-		n->accept(*this); i++;
-	} ); level--; i = 0;
-	LEVEL(level); std::cout << "vars : " << std::endl;
-	level++; std::for_each(n.vars.begin(), n.vars.end(), [=, &i](Node * n){ 
-		LEVEL(level); std::cout << "[ " << i << " ]" << std::endl;
+		LEVEL(level - 1); std::cout << "[ " << i << " ]" << std::endl;
 		n->accept(*this); i++;
 	} ); level--;
 	LEVEL(level); std::cout << "block : " << std::endl;
@@ -55,9 +53,14 @@ void PrintAST::visit(DefFunctionNode & n){
 void PrintAST::visit(BlockNode & n){
 	int i = 0;
 	LEVEL(level); std::cout << "< Block >" << std::endl;
+	LEVEL(level); std::cout << "vars : " << std::endl;
+	level++; std::for_each(n.vars.begin(), n.vars.end(), [=, &i](Node * n){ 
+		LEVEL(level - 1); std::cout << "[ " << i << " ]" << std::endl;
+		n->accept(*this); i++;
+	} ); level--; i = 0;
 	LEVEL(level); std::cout << "stmts : " << std::endl;
 	level++; std::for_each(n.stmts.begin(), n.stmts.end(), [=, &i](Node * n){ 
-		LEVEL(level); std::cout << "[ " << i << " ]" << std::endl;
+		LEVEL(level - 1); std::cout << "[ " << i << " ]" << std::endl;
 		n->accept(*this); i++;
 	} ); level--;
 }
@@ -74,8 +77,19 @@ void PrintAST::visit(BasicTypeNode & n){
 	LEVEL(level); std::cout << "< BasicType >" << std::endl;
 	LEVEL(level); std::cout << "name : " << getOp(n.type) << std::endl;
 }
-void PrintAST::visit(LoopNode & n){
-	LEVEL(level); std::cout << "< Loop >" << std::endl;
+void PrintAST::visit(WhileNode & n){
+	LEVEL(level); std::cout << "< While >" << std::endl;
+	LEVEL(level); std::cout << "cond : " << std::endl;
+	level++; n.cond->accept(*this); level--;
+	LEVEL(level); std::cout << "stmt : " << std::endl;
+	level++; n.stmt->accept(*this); level--;
+	if(n.Else != NULL){
+		LEVEL(level); std::cout << "else : " << std::endl;
+		level++; n.Else->accept(*this); level--;
+	}
+}
+void PrintAST::visit(ForNode & n){
+	LEVEL(level); std::cout << "< For >" << std::endl;
 	LEVEL(level); std::cout << "cond : " << std::endl;
 	level++; n.cond->accept(*this); level--;
 	LEVEL(level); std::cout << "stmt : " << std::endl;
@@ -92,11 +106,13 @@ void PrintAST::visit(IfNode & n){
 	level++; n.cond->accept(*this); level--;
 	LEVEL(level); std::cout << "stmt : " << std::endl;
 	level++; n.stmt->accept(*this); level--;
-	LEVEL(level); std::cout << "elif : " << std::endl;
-	level++; std::for_each(n.elif.begin(), n.elif.end(), [=, &i](Node * n){ 
-		LEVEL(level); std::cout << "[ " << i << " ]" << std::endl;
-		n->accept(*this); i++;
-	} ); level--;
+	if(!n.elif.empty()){
+		LEVEL(level); std::cout << "elif : " << std::endl;
+		level++; std::for_each(n.elif.begin(), n.elif.end(), [=, &i](Node * n){ 
+			LEVEL(level - 1); std::cout << "[ " << i << " ]" << std::endl;
+			n->accept(*this); i++;
+		} ); level--;
+	}
 	if(n.Else != NULL){
 		LEVEL(level); std::cout << "else : " << std::endl;
 		level++; n.Else->accept(*this); level--;
@@ -123,25 +139,24 @@ void PrintAST::visit(LiteralNumberNode & n){
 void PrintAST::visit(VariableNode & n){
 	LEVEL(level); std::cout << "< Variable >" << std::endl;
 	LEVEL(level); std::cout << "name : " << n.name << std::endl;
-	if(n.expr != NULL){
-		LEVEL(level); std::cout << "expr : " <<  std::endl;
-		level++; n.expr->accept(*this); level--;
-	}
 }
 void PrintAST::visit(FunctionCallNode & n){
 	int i = 0;
 	LEVEL(level); std::cout << "< FunctionCall >" << std::endl;
-	LEVEL(level); std::cout << "name : " << n.name << std::endl;
+	LEVEL(level); std::cout << "name : " << std::endl;
+	level++; n.name->accept(*this);level--;
 	LEVEL(level); std::cout << "args : " << std::endl;
 	level++; std::for_each(n.args.begin(), n.args.end(), [=, &i](Node * n){ 
-		LEVEL(level); std::cout << "[ " << i << " ]" << std::endl;
+		LEVEL(level - 1); std::cout << "[ " << i << " ]" << std::endl;
 		n->accept(*this); i++;
 	} ); level--;
 }
 void PrintAST::visit(ReturnNode & n){
 	LEVEL(level); std::cout << "< Return >" << std::endl;
-	LEVEL(level); std::cout << "expr : " << std::endl;
-	level++; n.expr->accept(*this); level--;
+	if(n.expr != NULL){
+		LEVEL(level); std::cout << "expr : " << std::endl;
+		level++; n.expr->accept(*this); level--;
+	}
 }
 void PrintAST::visit(NopNode & n){
 	LEVEL(level); std::cout << "< Nop >" << std::endl;
@@ -149,4 +164,12 @@ void PrintAST::visit(NopNode & n){
 
 void PrintAST::visit(VoidNode & n){
 	LEVEL(level); std::cout << "< Void >" << std::endl;
+}
+
+void PrintAST::visit(BreakNode & n){
+	LEVEL(level); std::cout << "< Break >" << std::endl;
+}
+
+void PrintAST::visit(ContinueNode & n){
+	LEVEL(level); std::cout << "< Continue >" << std::endl;
 }

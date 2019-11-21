@@ -9,14 +9,14 @@ TARGET	= c.o
 all: $(TARGET)
 
 $(TARGET): $(CFILE)
-	$(CC) $^ -I../header
+	$(CC) $^ -I../header -g
 	ld -relocatable $(CFILE:.c=.o) -o $@
 	
 lex.yy.c: $(LEXFILE).l $(YACCFILE).tab.h
 	$(LEX) $^
 
 $(YACCFILE).tab.c $(YACCFILE).tab.h : $(YACCFILE).y
-	$(YACC) $^
+	$(YACC) $^ --report all
 	
 clean:
 	rm lex.yy.c
@@ -24,3 +24,4 @@ clean:
 	rm $(YACCFILE).tab.c
 	rm $(CFILE:.c=.o)
 	rm $(TARGET)
+	rm $(YACCFILE).output

@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <iostream>
 
 class Visitor;
 class PrintAST;
@@ -13,7 +14,7 @@ private:
 public:
 	friend class PrintAST;
 	Node() {};
-	~Node() {};
+	virtual ~Node() {};
 	virtual void accept(Visitor & v) = 0;
 };
 
@@ -24,24 +25,22 @@ private:
 	std::string entry;
 	std::vector<Node *> defvars;
 	std::vector<Node *> defunc;
-	Node * block;
 public:
 	friend class PrintAST;
-	ASTNode(const char * ep, Node * b):
-		entry(ep), block(b) {};
-	void addVar(Node * n) { defvars.push_back(n); }
-	void addFunc(Node * n) { defunc.push_back(n); }
+	ASTNode(const char * ep):
+		entry(ep) {};
+	void addVar(Node * n) { if(n != NULL) defvars.push_back(n); }
+	void addFunc(Node * n) { if(n != NULL) defunc.push_back(n); }
 	~ASTNode() {
 		std::for_each(defvars.begin(), defvars.end(), [](Node * n){ delete n; });
 		std::for_each(defunc.begin(), defunc.end(), [](Node * n){ delete n; });
-		delete block;
 	}
 	void accept(Visitor & v);
 };
 
 class DefVarNode : public Node {
 private:
-	std::vector<std::string> names;
+	std::vector<std::pair<std::string, Node *> > names;
 	Node * type;
 	
 public:
@@ -49,7 +48,7 @@ public:
 	DefVarNode(Node * t):
 		type(t) {}
 	~DefVarNode() { delete type; }
-	void addName(const char * n) { names.push_back(n); }
+	void addName(const char * n, Node * e) { names.push_back(std::make_pair(n, e)); }
 	void accept(Visitor & v);
 };
 
@@ -80,7 +79,6 @@ class DefFunctionNode : public Node {
 private:
 	std::string name;
 	std::vector<Node *> args;
-	std::vector<Node *> vars;
 	Node * retype;
 	Node * block;
 	
@@ -90,28 +88,31 @@ public:
 		name(n), retype(r), block(b) {}
 	~DefFunctionNode() {
 		std::for_each(args.begin(), args.end(), [](Node * n){ delete n; });
-		std::for_each(vars.begin(), vars.end(), [](Node * n){ delete n; });
 		delete retype;
 		delete block;
 	}
-	void addArg(Node * a) { args.push_back(a); }
-	void addVar(Node * v) { vars.push_back(v); }
+	void addArg(Node * a) { if(a != NULL) args.push_back(a); }
 	void accept(Visitor & v);
 };
 
 class BlockNode : public Node {
 private:
 	std::vector<Node *> stmts;
+	std::vector<Node *> vars;
 	
 public:
 	friend class PrintAST;
 	BlockNode() {}
-	~BlockNode() { std::for_each(stmts.begin(), stmts.end(), [](Node * n){ delete n; }); }
-	void addStatement(Node * n) { stmts.push_back(n); }
+	~BlockNode() {
+		std::for_each(stmts.begin(), stmts.end(), [](Node * n){ delete n; });
+		std::for_each(vars.begin(), vars.end(), [](Node * n){ delete n; });
+	}
+	void addStatement(Node * n) { if(n != NULL) stmts.push_back(n); }
+	void addVar(Node * n) { if(n != NULL) vars.push_back(n); }
 	void accept(Visitor & v);
 };
 
-class LoopNode : public Node {
+class WhileNode : public Node {
 private:
 	Node * cond;
 	Node * stmt;
@@ -119,9 +120,25 @@ private:
 	
 public:
 	friend class PrintAST;
-	LoopNode(Node * c, Node * s, Node * e):
+	WhileNode(Node * c, Node * s, Node * e):
 		cond(c), stmt(s), Else(e) {};
-	~LoopNode() { 
+	~WhileNode() { 
+		delete cond; delete stmt; delete Else; 
+	}
+	void accept(Visitor & v);
+};
+
+class ForNode : public Node {
+private:
+	Node * cond;
+	Node * stmt;
+	Node * Else;
+	
+public:
+	friend class PrintAST;
+	ForNode(Node * c, Node * s, Node * e):
+		cond(c), stmt(s), Else(e) {};
+	~ForNode() { 
 		delete cond; delete stmt; delete Else; 
 	}
 	void accept(Visitor & v);
@@ -143,7 +160,7 @@ public:
 		delete cond;
 		delete Else;
 	}
-	void addElif(Node * e) { elif.push_back(e); }
+	void addElif(Node * e) { if(e != NULL) elif.push_back(e); }
 	void accept(Visitor & v);
 };
 
@@ -189,27 +206,26 @@ public:
 class VariableNode : public Node {
 private:
 	std::string name;
-	Node * expr;
 	
 public:
 	friend class PrintAST;
-	VariableNode(const char * n, Node * e):
-		name(n), expr(e) {};
-	~VariableNode() { delete expr; }
+	VariableNode(const char * n):
+		name(n) {};
+	~VariableNode() { }
 	void accept(Visitor & v);
 };
 
 class FunctionCallNode : public Node {
 private:
-	std::string name;
+	Node * name;
 	std::vector<Node *> args;
 	
 public:
 	friend class PrintAST;
-	FunctionCallNode(const char * n):
+	FunctionCallNode(Node * n):
 		name(n) {}
-	~FunctionCallNode() { std::for_each(args.begin(), args.end(), [](Node * n){ delete n; }); }
-	void addArg(Node * e) { args.push_back(e); }
+	~FunctionCallNode() { std::for_each(args.begin(), args.end(), [](Node * n){ delete n; }); delete name; }
+	void addArg(Node * e) { if(e != NULL) args.push_back(e); }
 	void accept(Visitor & v);
 };
 
@@ -234,6 +250,16 @@ public:
 	void accept(Visitor & v);
 };
 
+class ContinueNode : public Node {
+public:
+	void accept(Visitor & v);
+};
+
+class BreakNode : public Node {
+public:
+	void accept(Visitor & v);
+};
+
 class Visitor{
 public:
 	virtual void visit(Node & n) = 0;
@@ -243,7 +269,8 @@ public:
 	virtual void visit(BlockNode & n) = 0;
 	virtual void visit(TypeNode & n) = 0;
 	virtual void visit(BasicTypeNode & n) = 0;
-	virtual void visit(LoopNode & n) = 0;
+	virtual void visit(WhileNode & n) = 0;
+	virtual void visit(ForNode & n) = 0;
 	virtual void visit(IfNode & n) = 0;
 	virtual void visit(BinaryNode & n) = 0;
 	virtual void visit(UnaryNode & n) = 0;
@@ -253,5 +280,7 @@ public:
 	virtual void visit(ReturnNode & n) = 0;
 	virtual void visit(NopNode & n) = 0;
 	virtual void visit(VoidNode & n) = 0;
+	virtual void visit(ContinueNode & n) = 0;
+	virtual void visit(BreakNode & n) = 0;
 };
 

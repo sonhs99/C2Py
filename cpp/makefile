@@ -1,5 +1,5 @@
 CC = g++ -c
-CFLAG = -std=c++14 -I../header
+CFLAG = -std=c++14 -I../header -g
 CFILE = main.cpp Parser.cpp AST.cpp PrintAST.cpp
 TARGET = cpp.o
 
