@@ -52,13 +52,12 @@
 \n 		yylineno++;
 
 [A-Za-z][A-Za-z0-9]*		{
-	int i = 0;
 	char * str = malloc(sizeof(yytext));
 	yylval.data = strcpy(str, yytext);
 	return IDENT;
 }
 
-(0|[1-9][0-9]*)("."[0-9]+[1-9])?	{
+(\+|-)?(0|[1-9][0-9]*)("."[0-9]+[1-9])?	{
 	char * str = malloc(sizeof(yytext));
 	yylval.data = strcpy(str, yytext);
 	return NUMBER;

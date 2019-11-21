@@ -47,13 +47,18 @@ Node * ASTGenerate(ParseTree * pt){
 			temp_b = ASTGenerate(pt->child->sibling);
 			return new WhileNode(ASTGenerate(pt->child), temp_b, temp_a);
 		case If:
-		case Elif:
 			temp_b = new IfNode( ASTGenerate(pt->child),
 								ASTGenerate(pt->child->sibling),
 								ASTGenerate(pt->child->sibling->sibling->sibling)
 			);
 			for(auto temp_a = pt->child->sibling->sibling->child; temp_a != NULL; temp_a = temp_a->sibling) 
 				((IfNode *)temp_b)->addElif(ASTGenerate(temp_a));
+			return temp_b;
+		case Elif:
+			temp_b = new IfNode( ASTGenerate(pt->child),
+								ASTGenerate(pt->child->sibling),
+								NULL
+			);
 			return temp_b;
 		case Block:
 			temp_b = new BlockNode();

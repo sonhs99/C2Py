@@ -94,7 +94,8 @@ identifier_list
 	
 init
 	:ASS expr { $$ = $2;}
-	| { $$ = CreatePT(Void, NULL, NULL, NULL); }
+	| { $$ = CreatePT(Void, "void", NULL, NULL); }
+	| error { $$ = CreatePT(Void, "void", NULL, NULL); }
 	
 type
 	: standard_type { $$ = CreatePT(Type, "type", $1, NULL); }
@@ -215,7 +216,7 @@ block
 	:BEG declarations stmts END{ 
 		$$ = CreatePT(Block, "block", $3, $2); 
 	}
-	|BEG declarations stmts error{
+	|BEG declarations stmts {
 		fprintf(stderr, "line (%d) : \'end\' is missing\n", yylineno);
 		$$ = CreatePT(Block, "block", $3, $2);
 	}
@@ -232,6 +233,7 @@ stmt
 	|if
 	|while
 	|for
+	|error error { fprintf(stderr, "line (%d) : \'stmt\' is required\n", yylineno); $$ = NULL; }
 	
 stmt_semi
 	:expr

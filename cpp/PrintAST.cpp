@@ -106,11 +106,13 @@ void PrintAST::visit(IfNode & n){
 	level++; n.cond->accept(*this); level--;
 	LEVEL(level); std::cout << "stmt : " << std::endl;
 	level++; n.stmt->accept(*this); level--;
-	LEVEL(level); std::cout << "elif : " << std::endl;
-	level++; std::for_each(n.elif.begin(), n.elif.end(), [=, &i](Node * n){ 
-		LEVEL(level - 1); std::cout << "[ " << i << " ]" << std::endl;
-		n->accept(*this); i++;
-	} ); level--;
+	if(!n.elif.empty()){
+		LEVEL(level); std::cout << "elif : " << std::endl;
+		level++; std::for_each(n.elif.begin(), n.elif.end(), [=, &i](Node * n){ 
+			LEVEL(level - 1); std::cout << "[ " << i << " ]" << std::endl;
+			n->accept(*this); i++;
+		} ); level--;
+	}
 	if(n.Else != NULL){
 		LEVEL(level); std::cout << "else : " << std::endl;
 		level++; n.Else->accept(*this); level--;
