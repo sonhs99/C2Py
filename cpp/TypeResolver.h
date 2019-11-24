@@ -1,36 +1,62 @@
 #pragma once
-#include <map>
+#include "AST.h"
+#include <vector>
 #include <string>
+
+struct TypeInfo{
+	int offset;
+	int type;
+	int size;
+	std::string name;
+	TypeInfo(std::string & n, int o, int t, int s): name(n), offset(o), type(t), size(s) {};
+};
+
+struct FunctionInfo{
+	std::string name;
+	int ret;
+	std::vector<int> args;
+	FunctionInfo(std::string & n, int r, std::vector<int> & arg): name(n), ret(r), args(arg) {};
+};
 
 class SymbolTable{
 private:
 	std::string name;
-	std::map<std::string, int> symbol;
-	std::map<std::string, SymbolTable> sub;
+	std::vector<TypeInfo> vars;
+	std::vector<FunctionInfo> funcs;
+	std::vector<SymbolTable *> sub;
 	SymbolTable * parent;
+	int size;
 public:
-	SymbolTable();
-	~SymbolTable();
-	void addSymbol(std::string & n, int & symbol);
-	void addTable(std::string & n, SymbolTable & t);
-	int searchSymbol(std::string & n);
-	SymbolTable & searchTable(std::string & n);
-}
+	SymbolTable(SymbolTable * p = NULL) : parent(p), size(0) { }
+	~SymbolTable(){
+		std::for_each(sub.begin(), sub.end(), [=](SymbolTable * s){ delete s; } );
+	}
+	void addVar(std::string & n, int type, int s);
+	void addFunc(std::string & n, int ret, std::vector<int> & arg);
+	void addTable(SymbolTable * t);
+	TypeInfo searchVar(std::string & n);
+	FunctionInfo searchFunc(std::string & n);
+	SymbolTable * getParent(){ return parent; }
+	void print();
+	friend void PrintTable(SymbolTable * t, int level);
+};
 
 class TypeResolver : public Visitor {
 private:
-	SymbolTable root;
+	SymbolTable * root;
 	SymbolTable * now;
-	int expect;
+	
 	int actual;
 	int ret;
 	int size;
 	
-	int IsConvertable(int a, int b, int Opcode);
+	bool usage = false;
+	
+	int IsConvertable(int a, int b, int Op);
 	
 public:
-	TypeResolver();
-	~TypeResolver();
+	TypeResolver() : root(new SymbolTable()) { now = root; };
+	~TypeResolver() {};
 	void visit(Node & n);
 	void visit(ASTNode & n);
 	void visit(DefVarNode & n);
@@ -51,4 +77,8 @@ public:
 	void visit(VoidNode & n);
 	void visit(ContinueNode & n);
 	void visit(BreakNode & n);
-}
+	void visit(CastNode & n);
+	SymbolTable * getTable() { return root; }
+};
+
+void PrintTable(SymbolTable * t, int level);

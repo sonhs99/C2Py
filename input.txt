@@ -1,13 +1,15 @@
 mainprog main;
-function main(argv:int4, argc:int) : float
+int i;
+float t;
+function main (argv:int, argc:int) : int
 begin
-	int b = c + d() +;
-	int4 a;
-	[100];
-	a = -2;
-	if a == c : return 1;
-end
-function asdf : int
-begin
-	return function
-end
+	int a;
+	int b;
+	float[4] c;
+	int d;
+	b = b + 1;
+	b = func(a*3,b+3);
+	if a == c: begin
+		int a = 4;
+	end
+end	

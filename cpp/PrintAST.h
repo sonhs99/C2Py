@@ -29,4 +29,5 @@ public:
 	void visit(VoidNode & n);
 	void visit(ContinueNode & n);
 	void visit(BreakNode & n);
+	void visit(CastNode & n);
 };
