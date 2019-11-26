@@ -17,7 +17,8 @@ int yyerror(struct TreeNode ** pt, char const *str) { return 0; };
 }
 %token<data> NUMBER IDENT
 %left ASS 
-%left EQUAL NOTEQU GREATER EQUGRE LESS EQULESS IN
+%left EQUAL NOTEQU GREATER EQUGRE LESS EQULESS
+%right IN
 %left ADD SUB
 %left MUL DIV
 %nonassoc UMINUS UPLUS NOT
@@ -32,7 +33,7 @@ int yyerror(struct TreeNode ** pt, char const *str) { return 0; };
 %type<node> program declarations identifier_list type standard_type subprograms
 %type<node> subprogram subprogram_head args params block stmts stmt
 %type<node> if elif else while for exprs expr ret_expr
-%type<node> expr_list term stmt_semi init param
+%type<node> expr_list term stmt_semi init param number
 
 %parse-param {
 	struct TreeNode ** pt
@@ -104,6 +105,10 @@ type
 	: standard_type { $$ = CreatePT(Type, "type", $1, NULL); }
 	| standard_type LBRACKET NUMBER RBRACKET{
 		$1->sibling = CreatePT(Num, strdup($3), NULL, NULL);
+		$$ = CreatePT(Type, "type", $1, NULL);
+	}
+	| standard_type LBRACKET RBRACKET {
+		$1->sibling = CreatePT(Void, "void", NULL, NULL);
 		$$ = CreatePT(Type, "type", $1, NULL);
 	}
 	| standard_type LBRACKET NUMBER error{
@@ -308,6 +313,13 @@ for
 			CreatePT(In, "in", $2, $6),
 			NULL);
 	}
+	|FOR expr COLON stmt else {
+		fprintf(stderr, "line (%d) : \'in\' is required\n", yylineno);
+		$2->sibling = CreatePT(Void, "void", NULL, NULL); $4->sibling = $5;
+		$$ = CreatePT(For, "for", 
+			CreatePT(In, "in", $2, $4),
+			NULL);
+	}
 
 expr_list
 	:exprs { $$ = CreatePT(List, "List", $1, NULL); }
@@ -350,9 +362,16 @@ expr
 	}	
 	
 term
-	:NUMBER { $$ = CreatePT(Num, strdup($1), NULL, NULL); }
+	:number
 	|IDENT { $$ = CreatePT(Var, strdup($1), NULL, NULL); }
 	|LPAREN expr RPAREN { $$ = $2; }
 	|LPAREN expr error { fprintf(stderr, "line (%d) : \')\' is required\n", yylineno); $$ = $2; }
 	|error { fprintf(stderr, "line (%d) : \'term\' is required\n", yylineno); $$ = CreatePT(Void, "void", NULL, NULL);}
+	
+number
+	:NUMBER { $$ = CreatePT(Num, strdup($1), NULL, NULL); }
+	|NUMBER number {
+		fprintf(stderr, "line (%d) : \'number\' is declared repeatedly\n", yylineno);
+		free($1); $$ = $2; 
+		}
 %%

@@ -13,12 +13,14 @@ class SymbolTable;
 
 class Node{
 private:
-	
+	int t;
 public:
 	friend class PrintAST;
-	Node() {};
+	enum {NORMAL = 0, BLOCK, VARIABLE, FUNCCALL};
+	Node(int i = NORMAL) : t(i) {};
 	virtual ~Node() {};
 	virtual void accept(Visitor & v) = 0;
+	int getT() { return t; }
 };
 
 Node * ASTGenerate(ParseTree * pt);
@@ -111,7 +113,7 @@ private:
 public:
 	friend class PrintAST;
 	friend class TypeResolver;
-	BlockNode() : scope(NULL) {}
+	BlockNode() : Node(BLOCK), scope(NULL) {}
 	~BlockNode() {
 		std::for_each(stmts.begin(), stmts.end(), [](Node * n){ delete n; });
 		std::for_each(vars.begin(), vars.end(), [](Node * n){ delete n; });
@@ -228,7 +230,7 @@ public:
 	friend class PrintAST;
 	friend class TypeResolver;
 	VariableNode(const char * n):
-		name(n) {};
+		Node(VARIABLE), name(n) {};
 	~VariableNode() { }
 	void accept(Visitor & v);
 };

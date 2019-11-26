@@ -116,4 +116,5 @@ void IfNode::accept(Visitor & v) { v.visit(*this); }
 void VoidNode::accept(Visitor & v) { v.visit(*this); }
 void ContinueNode::accept(Visitor & v) { v.visit(*this); }
 void BreakNode::accept(Visitor & v) { v.visit(*this); }
+void CastNode::accept(Visitor & v) { v.visit(*this); }
 

@@ -3,7 +3,7 @@
 #include <iostream>
 
 void TypeResolver::visit(Node & n){
-	std::cout << "line ( ) : Unknown AST Node" << std::endl;
+	std::cerr << "line ( ) : Unknown AST Node" << std::endl;
 }
 void TypeResolver::visit(ASTNode & n){
 	std::for_each(n.defvars.begin(), n.defvars.end(), [=](Node * n){ 
@@ -19,10 +19,10 @@ void TypeResolver::visit(DefVarNode & n){
 	int s = size;
 	std::for_each(n.names.begin(), n.names.end(), [=](auto n){
 		now->addVar(n.first, a, s);
-		/*if(n.second != NULL) {
+		if(n.second != NULL) {
 			n.second->accept(*this);
-			IsConvertable(a, expect, 0);
-		}*/
+			//IsConvertable(a, expect, 0);
+		}
 	} ); 
 }
 void TypeResolver::visit(DefFunctionNode & n){
@@ -36,6 +36,7 @@ void TypeResolver::visit(DefFunctionNode & n){
 		arg.push_back(actual);
 	} );
 	root->addFunc(n.name, ret, arg);
+	now->Nomalize();
 	n.block->accept(*this);
 }
 void TypeResolver::visit(BlockNode & n){
@@ -81,7 +82,25 @@ void TypeResolver::visit(WhileNode & n){
 		n.Else->accept(*this); 
 }
 void TypeResolver::visit(ForNode & n){
-	n.cond->accept(*this);
+	if(((BinaryNode*)n.cond)->lhs->getT() != Node::VARIABLE){
+		std::cerr << "line ( ) : 'for' statement must have a variable" << std::endl;
+	}
+	else {
+		if(n.stmt->getT() != Node::BLOCK){
+			auto temp = n.stmt;
+			(n.stmt = new BlockNode());
+			((BlockNode*)n.stmt)->addStatement(temp);
+		}
+		((BinaryNode*)n.cond)->rhs->accept(*this);
+		if(actual/2 == 0 || actual % 2 == 0){
+			std::cerr << "line ( ) : 'for' statement must have an iterable array" << std::endl;
+		}
+		else{
+			now = new SymbolTable(now);
+			usage = true;
+			now->addVar(((VariableNode*)((BinaryNode*)n.cond)->lhs)->name, actual/2, 1);
+		}
+	}
 	n.stmt->accept(*this); 
 	if(n.Else != NULL)
 		n.Else->accept(*this); 
@@ -99,11 +118,119 @@ void TypeResolver::visit(IfNode & n){
 void TypeResolver::visit(BinaryNode & n){
 	n.lhs->accept(*this);
 	int e = actual;
-	n.rhs->accept(*this); 
-	actual = IsConvertable(e, actual, n.type);
+	bool l = lvalue;
+	n.rhs->accept(*this);
+	if(!e || !actual){
+		if(e) actual = e;
+		lvalue = false;
+		return;
+	}
+	switch(n.type){
+		case In:
+			if(actual%2 == 0){
+				std::cerr << "line ( ) : rhs of 'In' must have a array";
+				actual = 0;
+				break;
+			}
+			if(!IsConvertable(e, actual - 1)){
+				std::cerr << "line ( ) : cannot convert '" << ResolveType(e) << "' to '" << ResolveType(actual - 1) <<"'" << std::endl;
+			}
+			else if(e != actual - 1)
+				n.lhs = new CastNode(actual, n.lhs);
+			actual = 2;
+			break;
+		case Array:
+			if(e%2 == 0){
+				std::cerr << "line ( ) : rhs of 'In' must have a array";
+				actual = 0;
+				lvalue = true;
+				break;
+			}
+			if(actual != 2)
+				std::cerr << "line ( ) : cannot convert '" << ResolveType(actual) << "' to 'int'" << std::endl;
+			actual = e - 1;
+			lvalue = true;
+			return;
+		case Assign:
+			if(!l){
+				std::cerr << "line ( ) : lhs of '=' must be lvalue " << std::endl;
+			}
+			if(!IsConvertable(e, actual))
+				std::cerr << "line ( ) : cannot convert '" << ResolveType(e) << "' to '"<< ResolveType(actual) << "'" << std::endl;
+			else if(e != actual)
+				n.rhs = new CastNode(e, n.rhs);
+			lvalue = true;
+			return;
+		case Plus:
+		case Minus:
+		case Div:
+		case Mul:
+			if(e%2 || actual%2){
+				std::cerr << "line ( ) : Arithmetic Operator cannot hold array(s) as an operend" << std::endl;
+				actual = 4;
+				break;
+			}
+			if(e != actual){
+				if(e == 4){
+					if(!IsConvertable(actual, 4))
+						std::cerr << "line ( ) : cannot convert '" << ResolveType(actual) << "' to 'float'" << std::endl;
+					else n.rhs = new CastNode(4, n.rhs);
+				}
+				else if(actual == 4){
+					if(!IsConvertable(e, 4))
+						std::cerr << "line ( ) : cannot convert '" << ResolveType(e) << "' to 'float'" << std::endl;
+					else n.lhs = new CastNode(4, n.lhs);
+				}
+				else
+					std::cerr << "line ( ) : unknown type" << std::endl;
+				actual = 4;
+			}
+			break;
+		default:
+			if(e%2 || actual%2){
+				std::cerr << "line ( ) : Relational Operator cannot hold array(s) as an operend" << std::endl;
+				actual = 2;
+				break;
+			}
+			if(e != actual){
+				if(e == 4){
+					if(!IsConvertable(actual, 4))
+						std::cerr << "line ( ) : cannot convert '" << ResolveType(actual) << "' to 'float'" << std::endl;
+					else n.rhs = new CastNode(4, n.rhs);
+				}
+				else if(actual == 4){
+					if(!IsConvertable(e, 4))
+						std::cerr << "line ( ) : cannot convert '" << ResolveType(e) << "' to 'float'" << std::endl;
+					else n.lhs = new CastNode(4, n.lhs);
+				}
+				else
+					std::cerr << "line ( ) : unknown type" << std::endl;
+			}
+			actual = 2;
+	}
+	lvalue = false;
 }
 void TypeResolver::visit(UnaryNode & n){
-	n.expr->accept(*this); 
+	n.expr->accept(*this);
+	switch(n.type){
+		case Pos:
+		case Neg:
+			if(IsConvertable(actual, 2)){
+				std::cerr << "line ( ) : cannot convert '" << ResolveType(actual) << "' to 'int'" << std::endl;
+			}
+			break;
+		case Not:
+			if(IsConvertable(actual, 2)){
+				std::cerr << "line ( ) : cannot convert '" << ResolveType(actual) << "' to 'int'" << std::endl;
+			}
+			if(actual != 2)
+				n.expr = new CastNode(2, n.expr);
+			actual = 2;
+			break;
+		default:
+			break;
+	}
+	lvalue = false;
 }
 void TypeResolver::visit(LiteralNumberNode & n){
 	bool dot = false;
@@ -115,18 +242,37 @@ void TypeResolver::visit(LiteralNumberNode & n){
 		actual = 2;
 		size = stoi(n.val);
 	} //정수
+	lvalue = false;
 }
 void TypeResolver::visit(VariableNode & n){
-	//actual = now->searchVar(n.name).type;
+	try{
+		actual = now->searchVar(n.name).type;
+		lvalue = true;
+	} catch(int){
+		try{
+			now->searchFunc(n.name);
+			actual = 1;
+			lvalue = false;
+		}catch(int){
+			actual = 0;
+		std::cerr << "line ( ) : '" << n.name << "' is not defined in the scope" << std::endl;
+		}
+	}
 }
 void TypeResolver::visit(FunctionCallNode & n){
+	n.name->accept(*this);
 	std::for_each(n.args.begin(), n.args.end(), [=](Node * n){ 
 		n->accept(*this);
-	} ); 
+	} );
+	lvalue = false;
 }
 void TypeResolver::visit(ReturnNode & n){
 	n.expr->accept(*this); 
-	//IsConvertable(actual, ret, 0);
+	if(!IsConvertable(actual, ret)){
+		std::cerr << "line ( ) : cannot convert '" << ResolveType(actual) << "' to '" << ResolveType(ret) <<"'" << std::endl;
+	}
+	else if(actual != ret)
+		n.expr = new CastNode(ret, n.expr);
 }
 void TypeResolver::visit(NopNode & n){
 }
@@ -134,6 +280,7 @@ void TypeResolver::visit(NopNode & n){
 void TypeResolver::visit(VoidNode & n){
 	actual = 0;
 	size = 0;
+	lvalue = false;
 }
 
 void TypeResolver::visit(BreakNode & n){
@@ -147,6 +294,10 @@ void TypeResolver::visit(CastNode & n){
 	actual = n.type;
 }
 
-int TypeResolver::IsConvertable(int a, int b, int Op){
-	return 0;
+bool TypeResolver::IsConvertable(int from, int to){
+	if(from == to) return true;
+	if(from%2 || to%2) return false;
+	if((from/2 - 1)*(from/2 - 2) >= 0 &&
+	  (to/2 - 1)*(to/2 - 2) >= 0) return true;
+	return false;
 }

@@ -7,9 +7,12 @@ begin
 	int b;
 	float[4] c;
 	int d;
-	b = b + 1;
-	b = func(a*3,b+3);
-	if a == c: begin
-		int a = 4;
-	end
+	b = b  1;
+	b = func(c*3,b+3);
+	for a in c : a = 4;
+	a+2 = 4;
 end	
+function asdf : int
+begin
+	int a = 3;
+end

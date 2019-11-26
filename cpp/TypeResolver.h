@@ -34,6 +34,7 @@ public:
 	void addVar(std::string & n, int type, int s);
 	void addFunc(std::string & n, int ret, std::vector<int> & arg);
 	void addTable(SymbolTable * t);
+	void Nomalize();
 	TypeInfo searchVar(std::string & n);
 	FunctionInfo searchFunc(std::string & n);
 	SymbolTable * getParent(){ return parent; }
@@ -50,9 +51,10 @@ private:
 	int ret;
 	int size;
 	
+	bool lvalue = false;
 	bool usage = false;
 	
-	int IsConvertable(int a, int b, int Op);
+	static bool IsConvertable(int a, int b);
 	
 public:
 	TypeResolver() : root(new SymbolTable()) { now = root; };
@@ -82,3 +84,4 @@ public:
 };
 
 void PrintTable(SymbolTable * t, int level);
+const char * ResolveType(int type);

@@ -30,7 +30,7 @@ TypeInfo SymbolTable::searchVar(std::string & n){
 		if(var.name == n) return var;
 	}
 	if(parent == NULL) throw 0;
-	parent->searchVar(n);
+	return parent->searchVar(n);
 }
 
 FunctionInfo SymbolTable::searchFunc(std::string & n){
@@ -38,11 +38,12 @@ FunctionInfo SymbolTable::searchFunc(std::string & n){
 		if(func.name == n) return func;
 	}
 	if(parent == NULL) throw 0;
-	parent->searchFunc(n);
+	return parent->searchFunc(n);
 }
 
 const char * ResolveType(int type){
 	switch(type){
+		case 1: return "func";
 		case 2: return "int";
 		case 3: return "int[]";
 		case 4: return "float";
@@ -50,14 +51,14 @@ const char * ResolveType(int type){
 		default: return "void";
 	}
 }
-
+	
 void SymbolTable::print(){
 	if(parent != NULL) parent->print();
 	for(auto & var : vars){
-		printf("[ %#x ] : %s\t%s\t%d\n", var.offset, var.name.c_str(), ResolveType(var.type), var.size);
+		printf("[ %s%#04x ] : %s\t%s\t%d\n", var.offset >= 0 ? "+" : "-", var.offset>= 0 ? var.offset : -var.offset, var.name.c_str(), ResolveType(var.type), var.size);
 	}
 	for(auto & func : funcs){
-		printf("[ FUNC ] : %s\t%s\t(", func.name.c_str(), ResolveType(func.ret));
+		printf("[ FUNCT ] : %s\t%s\t(", func.name.c_str(), ResolveType(func.ret));
 		for(auto arg : func.args){
 			std::cout << ResolveType(arg) << ", ";
 		}
@@ -69,11 +70,11 @@ void PrintTable(SymbolTable * t, int level){
 	auto i = t->sub.begin();
 	for(auto & var : t->vars){
 		for(int i = 0; i < level; i++) std::cout << "  ";
-		printf("[ %-#4x ] : %10s%10s %d\n", var.offset, var.name.c_str(), ResolveType(var.type), var.size);
+		printf("[ %s%#04x ] : %10s%10s %d\n", var.offset >= 0 ? "+" : "-", var.offset>= 0 ? var.offset : -var.offset, var.name.c_str(), ResolveType(var.type), var.size);
 	}
 	for(auto & func : t->funcs){
 		for(int i = 0; i < level; i++) std::cout << "  ";
-		printf("[ FUNC ] : %10s%10s (", func.name.c_str(), ResolveType(func.ret));
+		printf("[ FUNCT ] : %10s%10s (", func.name.c_str(), ResolveType(func.ret));
 		for(auto arg : func.args){
 			std::cout << ResolveType(arg) << ", ";
 		}
@@ -83,5 +84,12 @@ void PrintTable(SymbolTable * t, int level){
 	for(;i != t->sub.end(); i++){
 		PrintTable(*i, level+1);
 	}
+}
+
+void SymbolTable::Nomalize(){
+	for(auto & var : vars){
+		var.offset -= (size + 4);
+	}
+	size = 0;
 }
 
