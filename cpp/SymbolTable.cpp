@@ -17,7 +17,7 @@ void SymbolTable::addVar(std::string & n, int type, int s){
 	size += SizeOfType * s;
 }
 
-void SymbolTable::addFunc(std::string & n, int ret, std::vector<int> & arg){
+void SymbolTable::addFunc(std::string const & n, int ret, std::vector<int> const & arg){
 	funcs.push_back(FunctionInfo(n, ret, arg));
 }
 
@@ -25,16 +25,16 @@ void SymbolTable::addTable(SymbolTable * t){
 	sub.push_back(t);
 }
 
-TypeInfo SymbolTable::searchVar(std::string & n){
-	for(auto var : vars){	
+TypeInfo & SymbolTable::searchVar(std::string & n){
+	for(auto & var : vars){	
 		if(var.name == n) return var;
 	}
 	if(parent == NULL) throw 0;
 	return parent->searchVar(n);
 }
 
-FunctionInfo SymbolTable::searchFunc(std::string & n){
-	for(auto func : funcs){	
+FunctionInfo & SymbolTable::searchFunc(std::string & n){
+	for(auto & func : funcs){	
 		if(func.name == n) return func;
 	}
 	if(parent == NULL) throw 0;
@@ -79,7 +79,8 @@ void PrintTable(SymbolTable * t, int level){
 			std::cout << ResolveType(arg) << ", ";
 		}
 		std::cout << ")" << std::endl;
-		PrintTable(*(i++), level+1);
+		PrintTable(*i, level+1);
+		i++;
 	}
 	for(;i != t->sub.end(); i++){
 		PrintTable(*i, level+1);

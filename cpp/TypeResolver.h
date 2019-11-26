@@ -15,7 +15,7 @@ struct FunctionInfo{
 	std::string name;
 	int ret;
 	std::vector<int> args;
-	FunctionInfo(std::string & n, int r, std::vector<int> & arg): name(n), ret(r), args(arg) {};
+	FunctionInfo(std::string const & n, int r, std::vector<int> const & arg): name(n), ret(r), args(arg) {};
 };
 
 class SymbolTable{
@@ -32,11 +32,11 @@ public:
 		std::for_each(sub.begin(), sub.end(), [=](SymbolTable * s){ delete s; } );
 	}
 	void addVar(std::string & n, int type, int s);
-	void addFunc(std::string & n, int ret, std::vector<int> & arg);
+	void addFunc(std::string const & n, int ret, std::vector<int> const & arg);
 	void addTable(SymbolTable * t);
 	void Nomalize();
-	TypeInfo searchVar(std::string & n);
-	FunctionInfo searchFunc(std::string & n);
+	TypeInfo & searchVar(std::string & n);
+	FunctionInfo & searchFunc(std::string & n);
 	SymbolTable * getParent(){ return parent; }
 	void print();
 	friend void PrintTable(SymbolTable * t, int level);
@@ -46,6 +46,8 @@ class TypeResolver : public Visitor {
 private:
 	SymbolTable * root;
 	SymbolTable * now;
+	
+	FunctionInfo * func = NULL;
 	
 	int actual;
 	int ret;
@@ -57,7 +59,12 @@ private:
 	static bool IsConvertable(int a, int b);
 	
 public:
-	TypeResolver() : root(new SymbolTable()) { now = root; };
+	TypeResolver() : root(new SymbolTable()) { 
+		now = root;
+		std::string print = "print";
+		root->addFunc(print, 0, {4});
+		root->addTable(new SymbolTable(root));
+	};
 	~TypeResolver() {};
 	void visit(Node & n);
 	void visit(ASTNode & n);

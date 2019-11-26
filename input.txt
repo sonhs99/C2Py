@@ -7,10 +7,10 @@ begin
 	int b;
 	float[4] c;
 	int d;
-	b = b  1;
-	b = func(c*3,b+3);
-	for a in c : a = 4;
-	a+2 = 4;
+	b = b;
+	print(a);
+	for asdf : a = 4;
+	c[3] + i;
 end	
 function asdf : int
 begin

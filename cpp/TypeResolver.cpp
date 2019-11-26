@@ -92,7 +92,8 @@ void TypeResolver::visit(ForNode & n){
 			((BlockNode*)n.stmt)->addStatement(temp);
 		}
 		((BinaryNode*)n.cond)->rhs->accept(*this);
-		if(actual/2 == 0 || actual % 2 == 0){
+		if(actual == 0);
+		else if(actual/2 == 0 || actual % 2 == 0){
 			std::cerr << "line ( ) : 'for' statement must have an iterable array" << std::endl;
 		}
 		else{
@@ -250,24 +251,41 @@ void TypeResolver::visit(VariableNode & n){
 		lvalue = true;
 	} catch(int){
 		try{
-			now->searchFunc(n.name);
+			func = &(now->searchFunc(n.name));
 			actual = 1;
 			lvalue = false;
 		}catch(int){
 			actual = 0;
+			lvalue = false;
 		std::cerr << "line ( ) : '" << n.name << "' is not defined in the scope" << std::endl;
 		}
 	}
 }
 void TypeResolver::visit(FunctionCallNode & n){
 	n.name->accept(*this);
-	std::for_each(n.args.begin(), n.args.end(), [=](Node * n){ 
+	if(actual != 1){
+		std::cerr << "line ( ) : lhs cannot call as function" << std::endl;
+	}
+	else if(func->args.size() != n.args.size()){
+		std::cerr << "line ( ) : argument size is not matched" << std::endl;
+	}
+	bool IsEnd = actual != 1 || func->args.size() != n.args.size();
+	int i = 0;
+	for(Node *& n : n.args){ 
 		n->accept(*this);
-	} );
+		if(!IsEnd){
+			if(IsConvertable(actual,func->args[i]))
+				if(actual != func->args[i]) n = new CastNode(func->args[i], n);
+			else
+				std::cerr << "line ( ) : cannot convert '" << ResolveType(actual) << "' to '" << ResolveType(func->args[i]) <<"'" << std::endl;
+		}
+		i++;
+	}
+	actual = IsEnd ? 0 : func->ret;
 	lvalue = false;
 }
 void TypeResolver::visit(ReturnNode & n){
-	n.expr->accept(*this); 
+	n.expr->accept(*this);
 	if(!IsConvertable(actual, ret)){
 		std::cerr << "line ( ) : cannot convert '" << ResolveType(actual) << "' to '" << ResolveType(ret) <<"'" << std::endl;
 	}
