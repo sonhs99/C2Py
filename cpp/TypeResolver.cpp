@@ -17,13 +17,14 @@ void TypeResolver::visit(DefVarNode & n){
 	n.type->accept(*this);
 	int a = actual;
 	int s = size;
-	std::for_each(n.names.begin(), n.names.end(), [=](auto n){
+	for(auto n : n.names){
 		now->addVar(n.first, a, s);
 		if(n.second != NULL) {
 			n.second->accept(*this);
-			//IsConvertable(a, expect, 0);
+			if(!IsConvertable(actual, a))
+				std::cerr << "line ( ) : cannot convert '" << ResolveType(a) << "' to '" << ResolveType(actual) <<"'" << std::endl;
 		}
-	} ); 
+	} 
 }
 void TypeResolver::visit(DefFunctionNode & n){
 	n.retype->accept(*this);
@@ -59,6 +60,9 @@ void TypeResolver::visit(TypeNode & n){
 	if(n.size != NULL) { 
 		temp++;
 		n.size->accept(*this); 
+		if(actual != 2 || size < 0)
+			std::cerr << "line ( ) : size of array must be a positive integer" << std::endl;
+		if(size < 0) size = 0;
 	}
 	actual = temp;
 }

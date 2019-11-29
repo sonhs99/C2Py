@@ -1,16 +1,19 @@
 mainprog main;
 int i;
 float t;
-function main (argv:int, argc:int) : int
+function main (argv:int[], argc:int) : int
 begin
 	int a;
 	int b;
 	float[4] c;
 	int d;
-	b = b;
 	print(a);
-	for asdf : a = 4;
+	for a in c : a = 4;
 	c[3] + i;
+	while 1==2:
+	begin
+		break;
+	end;
 end	
 function asdf : int
 begin

@@ -108,7 +108,7 @@ type
 		$$ = CreatePT(Type, "type", $1, NULL);
 	}
 	| standard_type LBRACKET RBRACKET {
-		$1->sibling = CreatePT(Void, "void", NULL, NULL);
+		$1->sibling = CreatePT(Num, strdup("0"), NULL, NULL);
 		$$ = CreatePT(Type, "type", $1, NULL);
 	}
 	| standard_type LBRACKET NUMBER error{
@@ -246,6 +246,7 @@ stmt_semi
 	|CONTINUE { $$ = CreatePT(Continue, "continue", NULL, NULL); }
 	|RETURN ret_expr { $$ = CreatePT(Return, "return", $2, NULL); }
 	|NOP { $$ = CreatePT(Nop, "nop", NULL, NULL); }
+	| { $$ = NULL; }
 	
 ret_expr
 	:expr

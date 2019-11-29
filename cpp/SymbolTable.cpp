@@ -3,18 +3,7 @@
 
 void SymbolTable::addVar(std::string & n, int type, int s){
 	vars.push_back(TypeInfo(n, size, type, s));
-	int SizeOfType = 0;
-	switch(type/2){
-		case 1:
-			SizeOfType = 4;
-			break;
-		case 2:
-			SizeOfType = 4;
-			break;
-		default:
-			SizeOfType = 0;
-	}
-	size += SizeOfType * s;
+	size++;
 }
 
 void SymbolTable::addFunc(std::string const & n, int ret, std::vector<int> const & arg){
@@ -89,7 +78,7 @@ void PrintTable(SymbolTable * t, int level){
 
 void SymbolTable::Nomalize(){
 	for(auto & var : vars){
-		var.offset -= (size + 4);
+		var.offset -= (size + 2);
 	}
 	size = 0;
 }

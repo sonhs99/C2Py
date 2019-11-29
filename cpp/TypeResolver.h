@@ -25,9 +25,10 @@ private:
 	std::vector<FunctionInfo> funcs;
 	std::vector<SymbolTable *> sub;
 	SymbolTable * parent;
-	int size;
+	int size = 0;
+	
 public:
-	SymbolTable(SymbolTable * p = NULL) : parent(p), size(0) { }
+	SymbolTable(SymbolTable * p = NULL) : parent(p) { }
 	~SymbolTable(){
 		std::for_each(sub.begin(), sub.end(), [=](SymbolTable * s){ delete s; } );
 	}
