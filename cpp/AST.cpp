@@ -62,9 +62,9 @@ Node * ASTGenerate(ParseTree * pt){
 			return temp_b;
 		case Block:
 			temp_b = new BlockNode();
-			for(auto temp_a = pt->sibling; temp_a != NULL; temp_a = temp_a->sibling)
+			for(auto temp_a = pt->child->child; temp_a != NULL; temp_a = temp_a->sibling)
 				((BlockNode *)temp_b)->addVar(ASTGenerate(temp_a));
-			for(auto temp_a = pt->child; temp_a != NULL; temp_a = temp_a->sibling)
+			for(auto temp_a = pt->child->sibling; temp_a != NULL; temp_a = temp_a->sibling)
 				((BlockNode *)temp_b)->addStatement(ASTGenerate(temp_a));
 			return temp_b;
 		case Proc:
@@ -116,4 +116,5 @@ void IfNode::accept(Visitor & v) { v.visit(*this); }
 void VoidNode::accept(Visitor & v) { v.visit(*this); }
 void ContinueNode::accept(Visitor & v) { v.visit(*this); }
 void BreakNode::accept(Visitor & v) { v.visit(*this); }
+void CastNode::accept(Visitor & v) { v.visit(*this); }
 

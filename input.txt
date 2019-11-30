@@ -1,13 +1,21 @@
 mainprog main;
-function main(argv:int4, argc:int) : float
+int i;
+float t;
+function main (argv:int[], argc:int) : int
 begin
-	int b = c + d() +;
-	int4 a;
-	[100];
-	a = -2;
-	if a == c : return 1;
-end
+	int a;
+	int b;
+	float[4] c;
+	int d;
+	print(a);
+	for a in c : a = 4;
+	c[3] + i;
+	while 1==2:
+	begin
+		break;
+	end;
+end	
 function asdf : int
 begin
-	return function
+	int a = 3;
 end

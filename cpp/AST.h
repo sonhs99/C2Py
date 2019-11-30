@@ -6,16 +6,20 @@
 #include <iostream>
 
 class Visitor;
-class PrintAST;
+class SymbolTable;
 
 class Node{
 private:
-	
+	int t;
 public:
 	friend class PrintAST;
-	Node() {};
+	friend class TypeResolver;
+	friend class ICGenerator;
+	enum {NORMAL = 0, BLOCK, VARIABLE, FUNCCALL};
+	Node(int i = NORMAL) : t(i) {};
 	virtual ~Node() {};
 	virtual void accept(Visitor & v) = 0;
+	int getT() { return t; }
 };
 
 Node * ASTGenerate(ParseTree * pt);
@@ -27,6 +31,8 @@ private:
 	std::vector<Node *> defunc;
 public:
 	friend class PrintAST;
+	friend class TypeResolver;
+	friend class ICGenerator;
 	ASTNode(const char * ep):
 		entry(ep) {};
 	void addVar(Node * n) { if(n != NULL) defvars.push_back(n); }
@@ -45,6 +51,8 @@ private:
 	
 public:
 	friend class PrintAST;
+	friend class TypeResolver;
+	friend class ICGenerator;
 	DefVarNode(Node * t):
 		type(t) {}
 	~DefVarNode() { delete type; }
@@ -59,6 +67,8 @@ private:
 	
 public:
 	friend class PrintAST;
+	friend class TypeResolver;
+	friend class ICGenerator;
 	TypeNode(Node * b, Node * s): basic(b), size(s) {}
 	~TypeNode() { delete basic; delete size; }
 	void accept(Visitor & v);
@@ -70,6 +80,8 @@ private:
 	
 public:
 	friend class PrintAST;
+	friend class TypeResolver;
+	friend class ICGenerator;
 	BasicTypeNode(NodeKind t): type(t) {}
 	~BasicTypeNode(){}
 	void accept(Visitor & v);
@@ -84,6 +96,8 @@ private:
 	
 public:
 	friend class PrintAST;
+	friend class TypeResolver;
+	friend class ICGenerator;
 	DefFunctionNode(const char * n, Node * r, Node * b):
 		name(n), retype(r), block(b) {}
 	~DefFunctionNode() {
@@ -99,10 +113,12 @@ class BlockNode : public Node {
 private:
 	std::vector<Node *> stmts;
 	std::vector<Node *> vars;
-	
+	SymbolTable * scope;
 public:
 	friend class PrintAST;
-	BlockNode() {}
+	friend class TypeResolver;
+	friend class ICGenerator;
+	BlockNode() : Node(BLOCK), scope(NULL) {}
 	~BlockNode() {
 		std::for_each(stmts.begin(), stmts.end(), [](Node * n){ delete n; });
 		std::for_each(vars.begin(), vars.end(), [](Node * n){ delete n; });
@@ -110,6 +126,8 @@ public:
 	void addStatement(Node * n) { if(n != NULL) stmts.push_back(n); }
 	void addVar(Node * n) { if(n != NULL) vars.push_back(n); }
 	void accept(Visitor & v);
+	void setScope(SymbolTable * s) { scope = s; }
+	SymbolTable * getScope() { return scope; }
 };
 
 class WhileNode : public Node {
@@ -120,6 +138,8 @@ private:
 	
 public:
 	friend class PrintAST;
+	friend class TypeResolver;
+	friend class ICGenerator;
 	WhileNode(Node * c, Node * s, Node * e):
 		cond(c), stmt(s), Else(e) {};
 	~WhileNode() { 
@@ -136,6 +156,8 @@ private:
 	
 public:
 	friend class PrintAST;
+	friend class TypeResolver;
+	friend class ICGenerator;
 	ForNode(Node * c, Node * s, Node * e):
 		cond(c), stmt(s), Else(e) {};
 	~ForNode() { 
@@ -153,6 +175,8 @@ private:
 
 public:
 	friend class PrintAST;
+	friend class TypeResolver;
+	friend class ICGenerator;
 	IfNode(Node * c, Node * s, Node * e):
 		cond(c), stmt(s), Else(e) {}
 	~IfNode() {
@@ -172,6 +196,8 @@ private:
 	
 public:
 	friend class PrintAST;
+	friend class TypeResolver;
+	friend class ICGenerator;
 	BinaryNode(NodeKind t, Node * l, Node * r):
 		type(t), lhs(l), rhs(r) {}
 	~BinaryNode() { delete lhs; delete rhs; }
@@ -185,6 +211,8 @@ private:
 	
 public:
 	friend class PrintAST;
+	friend class TypeResolver;
+	friend class ICGenerator;
 	UnaryNode(NodeKind t, Node * e):
 		type(t), expr(e) {}
 	~UnaryNode() { delete expr; }
@@ -197,6 +225,8 @@ private:
 	
 public:
 	friend class PrintAST;
+	friend class TypeResolver;
+	friend class ICGenerator;
 	LiteralNumberNode(const char * v):
 		val(v) {};
 	~LiteralNumberNode() {};
@@ -209,8 +239,10 @@ private:
 	
 public:
 	friend class PrintAST;
+	friend class TypeResolver;
+	friend class ICGenerator;
 	VariableNode(const char * n):
-		name(n) {};
+		Node(VARIABLE), name(n) {};
 	~VariableNode() { }
 	void accept(Visitor & v);
 };
@@ -222,6 +254,8 @@ private:
 	
 public:
 	friend class PrintAST;
+	friend class TypeResolver;
+	friend class ICGenerator;
 	FunctionCallNode(Node * n):
 		name(n) {}
 	~FunctionCallNode() { std::for_each(args.begin(), args.end(), [](Node * n){ delete n; }); delete name; }
@@ -235,6 +269,8 @@ private:
 	
 public:
 	friend class PrintAST;
+	friend class TypeResolver;
+	friend class ICGenerator;
 	ReturnNode(Node * e): expr(e) {}
 	~ReturnNode() { delete expr; }
 	void accept(Visitor & v);
@@ -260,6 +296,20 @@ public:
 	void accept(Visitor & v);
 };
 
+class CastNode : public Node {
+private:
+	int type;
+	Node * expr;
+public:
+	friend class PrintAST;
+	friend class TypeResolver;
+	friend class ICGenerator;
+	
+	CastNode(int t, Node * e) : type(t), expr(e) {}
+	~CastNode() { delete expr; }
+	void accept(Visitor & v);
+};
+
 class Visitor{
 public:
 	virtual void visit(Node & n) = 0;
@@ -282,5 +332,6 @@ public:
 	virtual void visit(VoidNode & n) = 0;
 	virtual void visit(ContinueNode & n) = 0;
 	virtual void visit(BreakNode & n) = 0;
+	virtual void visit(CastNode & n) = 0;
 };
 

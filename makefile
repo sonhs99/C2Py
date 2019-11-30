@@ -19,4 +19,4 @@ clean:
 	rm -r $(LOGFILE)
 	
 run:
-	./bin/run $(INPUT) > $(LOGFILE)
+	./bin/run $(INPUT) -p -a -s > $(LOGFILE)

@@ -173,3 +173,11 @@ void PrintAST::visit(BreakNode & n){
 void PrintAST::visit(ContinueNode & n){
 	LEVEL(level); std::cout << "< Continue >" << std::endl;
 }
+
+void PrintAST::visit(CastNode & n){
+	LEVEL(level); std::cout << "< CastNode >" << std::endl;
+	LEVEL(level); std::cout << "type : " << (n.type >> 1) << std::endl;
+	LEVEL(level); std::cout << "IsArray : " << (n.type & 1) << std::endl;
+	LEVEL(level); std::cout << "expr : " << std::endl;
+	level++; n.expr->accept(*this); level--;
+}
