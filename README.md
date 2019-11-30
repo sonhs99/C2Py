@@ -12,8 +12,5 @@ The Tiny Language Interpreter
 
 -a :	show Abstract Syntex Tree
 
-<<<<<<< HEAD
 -s :	show Symbol Table
-=======
--s :	show Symbol Table
->>>>>>> c1d1691d011171e0ec84863ddf08d3fd93b65531
+
