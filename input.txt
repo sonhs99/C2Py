@@ -1,21 +1,16 @@
 mainprog main;
-int i;
-float t;
-function main (argv:int[], argc:int) : int
+function main
 begin
 	int a;
-	int b;
-	float[4] c;
-	int d;
+	int b = 4 * 3;
+	int[4] c;
 	print(a);
-	for a in c : a = 4;
-	c[3] + i;
-	while 1==2:
-	begin
-		break;
-	end;
+	a = b = a + 2;
+	if a < c[2] : print(b);
+	elif a == b : print(a);
+	else : b = 5;
+	while a == 5 : begin
+		b = 6;
+	end
+	else: a = 6;
 end	
-function asdf : int
-begin
-	int a = 3;
-end

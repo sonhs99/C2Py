@@ -9,5 +9,7 @@ The Tiny Language Interpreter
 <option> : To show how the Interpreter works
 
 -p :	show Parse Tree
+
 -a :	show Abstract Syntex Tree
+
 -s :	show Symbol Table

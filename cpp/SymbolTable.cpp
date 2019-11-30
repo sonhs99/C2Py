@@ -61,6 +61,10 @@ void PrintTable(SymbolTable * t, int level){
 		for(int i = 0; i < level; i++) std::cout << "  ";
 		printf("[ %s%#04x ] : %10s%10s %d\n", var.offset >= 0 ? "+" : "-", var.offset>= 0 ? var.offset : -var.offset, var.name.c_str(), ResolveType(var.type), var.size);
 	}
+	for(int i = 0; i < t->temp; i++){
+		for(int i = 0; i < level; i++) std::cout << "  ";
+		printf("[ +%#04x ] : %8s%02d\n", i+t->size, "_temp", i);
+	}
 	for(auto & func : t->funcs){
 		for(int i = 0; i < level; i++) std::cout << "  ";
 		printf("[ FUNCT ] : %10s%10s (", func.name.c_str(), ResolveType(func.ret));
@@ -83,3 +87,13 @@ void SymbolTable::Nomalize(){
 	size = 0;
 }
 
+void SymbolTable::SizeNomalize(int s){
+	for(auto & var : vars){
+		var.offset += s;
+	}
+	if(parent == NULL) s = 0;
+	else s += size + temp;
+	for(auto t : sub){
+		t->SizeNomalize(s);
+	}
+}

@@ -15,7 +15,7 @@ public:
 	friend class PrintAST;
 	friend class TypeResolver;
 	friend class ICGenerator;
-	enum {NORMAL = 0, BLOCK, VARIABLE, FUNCCALL};
+	enum {NORMAL = 0, BLOCK, VARIABLE, LITERAL, FUNCCALL};
 	Node(int i = NORMAL) : t(i) {};
 	virtual ~Node() {};
 	virtual void accept(Visitor & v) = 0;
@@ -228,7 +228,7 @@ public:
 	friend class TypeResolver;
 	friend class ICGenerator;
 	LiteralNumberNode(const char * v):
-		val(v) {};
+		Node(LITERAL), val(v) {};
 	~LiteralNumberNode() {};
 	void accept(Visitor & v);
 };

@@ -16,7 +16,7 @@ int yyerror(struct TreeNode ** pt, char const *str) { return 0; };
 	struct TreeNode * node;
 }
 %token<data> NUMBER IDENT
-%left ASS 
+%right ASS 
 %left EQUAL NOTEQU GREATER EQUGRE LESS EQULESS
 %right IN
 %left ADD SUB

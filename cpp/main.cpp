@@ -27,8 +27,9 @@ int main(int argc, char *argv[]){
 	auto head = parser.parse();
 	auto AST = ASTGenerate(head);
 	TypeResolver resolver;
-	ICGenerator generator;
 	AST->accept(*dynamic_cast<Visitor*>(&resolver));
+	resolver.getTable()->SizeNomalize();
+	ICGenerator generator(resolver.getTable());
 	AST->accept(*dynamic_cast<Visitor*>(&generator));
 	if(head != NULL){
 		if(ParseTree){
@@ -45,6 +46,8 @@ int main(int argc, char *argv[]){
 			PrintTable(resolver.getTable(), 0);
 		}
 	}
+	printf("\n=========== Intermediate Code ============\n\n");
+	generator.PrintCode();
 	DeletePT(head);
 	delete AST;
 	delete resolver.getTable();

@@ -12,6 +12,13 @@ void TypeResolver::visit(ASTNode & n){
 	std::for_each(n.defunc.begin(), n.defunc.end(), [=](Node * n){
 		n->accept(*this);
 	} );
+	try{
+		auto entry = root->searchFunc(n.entry);
+		if(entry.ret != 0 || entry.args.size() != 0)
+			std::cerr << "line ( ) : '" << n.entry <<"' cannot be Entry Point" << std::endl;
+	}catch(int){
+		std::cerr << "line ( ) : cannot find Entry Point" << std::endl;
+	}
 }
 void TypeResolver::visit(DefVarNode & n){
 	n.type->accept(*this);
@@ -44,12 +51,17 @@ void TypeResolver::visit(BlockNode & n){
 	if(!usage) now = new SymbolTable(now);
 	usage = false;
 	now->getParent()->addTable(now);
+	temp = 0;
 	std::for_each(n.vars.begin(), n.vars.end(), [=](Node * n){ 
+		temp = 0;
 		n->accept(*this);
+		now->setTemporaryStorage(temp);
 	} );
 	n.scope = now;
 	std::for_each(n.stmts.begin(), n.stmts.end(), [=](Node * n){ 
+		temp = 0;
 		n->accept(*this);
+		now->setTemporaryStorage(temp);
 	} );
 	now = now->getParent();
 }
@@ -81,11 +93,14 @@ void TypeResolver::visit(BasicTypeNode & n){
 }
 void TypeResolver::visit(WhileNode & n){
 	n.cond->accept(*this); 
+	stack++;
 	n.stmt->accept(*this); 
+	stack--;
 	if(n.Else != NULL)
 		n.Else->accept(*this); 
 }
 void TypeResolver::visit(ForNode & n){
+	int s = 0;
 	if(((BinaryNode*)n.cond)->lhs->getT() != Node::VARIABLE){
 		std::cerr << "line ( ) : 'for' statement must have a variable" << std::endl;
 	}
@@ -96,6 +111,7 @@ void TypeResolver::visit(ForNode & n){
 			((BlockNode*)n.stmt)->addStatement(temp);
 		}
 		((BinaryNode*)n.cond)->rhs->accept(*this);
+		now->setTemporaryStorage(temp);
 		if(actual == 0);
 		else if(actual/2 == 0 || actual % 2 == 0){
 			std::cerr << "line ( ) : 'for' statement must have an iterable array" << std::endl;
@@ -106,7 +122,9 @@ void TypeResolver::visit(ForNode & n){
 			now->addVar(((VariableNode*)((BinaryNode*)n.cond)->lhs)->name, actual/2, 1);
 		}
 	}
-	n.stmt->accept(*this); 
+	stack++;
+	n.stmt->accept(*this);
+	stack--;
 	if(n.Else != NULL)
 		n.Else->accept(*this); 
 }
@@ -133,7 +151,7 @@ void TypeResolver::visit(BinaryNode & n){
 	switch(n.type){
 		case In:
 			if(actual%2 == 0){
-				std::cerr << "line ( ) : rhs of 'In' must have a array";
+				std::cerr << "line ( ) : rhs of 'In' must have a array" << std::endl;
 				actual = 0;
 				break;
 			}
@@ -146,7 +164,7 @@ void TypeResolver::visit(BinaryNode & n){
 			break;
 		case Array:
 			if(e%2 == 0){
-				std::cerr << "line ( ) : rhs of 'In' must have a array";
+				std::cerr << "line ( ) : rhs of '[]' must have a array" << std::endl;
 				actual = 0;
 				lvalue = true;
 				break;
@@ -213,6 +231,22 @@ void TypeResolver::visit(BinaryNode & n){
 			}
 			actual = 2;
 	}
+	if(n.type != Assign && n.type != Array){
+		if(n.lhs->getT() == Node::LITERAL && n.rhs->getT() == Node::LITERAL);
+		else if(n.lhs->getT() <= Node::LITERAL && n.rhs->getT() <= Node::LITERAL)
+			temp++;
+		else if(n.lhs->getT() == Node::NORMAL){
+			if(n.rhs->getT() == Node::NORMAL){
+				now->setTemporaryStorage(temp);
+				temp--;
+			} 
+		} else {
+			if(n.rhs->getT() == Node::NORMAL);
+			else {
+				temp++;
+			}
+		}
+	}
 	lvalue = false;
 }
 void TypeResolver::visit(UnaryNode & n){
@@ -233,6 +267,12 @@ void TypeResolver::visit(UnaryNode & n){
 			actual = 2;
 			break;
 		default:
+			break;
+	}
+	switch(n.expr->getT()){
+		case Node::VARIABLE:
+		case Node::FUNCCALL:
+			temp++;
 			break;
 	}
 	lvalue = false;
@@ -306,14 +346,19 @@ void TypeResolver::visit(VoidNode & n){
 }
 
 void TypeResolver::visit(BreakNode & n){
+	if(stack == 0)
+		std::cerr << "line ( ) : Break statement is outside of loop" << std::endl;
 }
 
 void TypeResolver::visit(ContinueNode & n){
+	if(stack == 0)
+		std::cerr << "line ( ) : Continue statement is outside of loop" << std::endl;
 }
 
 void TypeResolver::visit(CastNode & n){
 	n.expr->accept(*this);
 	actual = n.type;
+	temp++;
 }
 
 bool TypeResolver::IsConvertable(int from, int to){

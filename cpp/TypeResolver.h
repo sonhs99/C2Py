@@ -26,6 +26,7 @@ private:
 	std::vector<SymbolTable *> sub;
 	SymbolTable * parent;
 	int size = 0;
+	int temp = 0;
 	
 public:
 	SymbolTable(SymbolTable * p = NULL) : parent(p) { }
@@ -41,6 +42,10 @@ public:
 	SymbolTable * getParent(){ return parent; }
 	void print();
 	friend void PrintTable(SymbolTable * t, int level);
+	void setTemporaryStorage(int s) { temp = ((temp > s) ? temp : s); }
+	int getTemporarySize() { return temp; }
+	int getVariableSize() { return size;}
+	void SizeNomalize(int s = 0);
 };
 
 class TypeResolver : public Visitor {
@@ -53,6 +58,8 @@ private:
 	int actual;
 	int ret;
 	int size;
+	int stack = 0;
+	int temp = 0;
 	
 	bool lvalue = false;
 	bool usage = false;
