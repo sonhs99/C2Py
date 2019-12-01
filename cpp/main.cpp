@@ -47,6 +47,7 @@ int main(int argc, char *argv[]){
 		}
 	}
 	printf("\n=========== Intermediate Code ============\n\n");
+	generator.Optimize();
 	generator.PrintCode();
 	DeletePT(head);
 	delete AST;

@@ -65,6 +65,11 @@ public:
 		Operand(k), offset(o), storage(s ? Data : Stack) {};
 	void print();
 	Operand * clone() { return new VariableOp(kind, offset, storage == Data); }
+	bool operator==(const VariableOp & v){
+		if(v.storage != storage) return false;
+		if(v.offset != offset) return false;
+		return true;
+	}
 };
 
 class LabelOp : public Operand{
@@ -84,7 +89,8 @@ public:
 	enum Kind{ ADD = 0, SUB, DIV, MUL, POS, NEG,
 			 NOT, EQU, NEQ, GRE, LES, GEQ, LEQ, IN,
 			  PUSH, POP, CALL, RET, MOV, 
-			  JZ, JMP, ITF, FTI, ALC};
+			  JZ, JMP, ITF, FTI,
+			  ALC, PRT};
 	Opcode(Kind k, Operand * d, Operand * s1, Operand * s2 = NULL):
 		kind(k), des(d), src1(s1), src2(s2) {};
 	~Opcode(){
@@ -135,5 +141,6 @@ public:
 	void visit(BreakNode & n);
 	void visit(CastNode & n);
 	void PrintCode();
+	void Optimize();
 };
 

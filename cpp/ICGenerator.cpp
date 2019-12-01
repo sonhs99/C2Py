@@ -415,6 +415,7 @@ const char * ResolveOp(Opcode::Kind op){
 		case Opcode::ITF:  return "ITF ";
 		case Opcode::FTI:  return "FTI ";
 		case Opcode::ALC:  return "ALC ";
+		case Opcode::PRT:  return "PRT ";
 	}
 	return "void";
 }
@@ -499,4 +500,41 @@ void ICGenerator::PrintCode(){
 	for(Pair & p : labels){
 		std::cout << p.first << " : " << p.second << std::endl;
 	}
+}
+
+void ICGenerator::Optimize(){
+	using Pair = std::pair<std::string, int>;
+	std::vector<std::pair<std::string, int> > labels(this->labels.begin(), this->labels.end());
+	std::sort(labels.begin(), labels.end(), [](const Pair & p1, const Pair & p2)->bool{
+		return p1.second < p2.second;
+	});
+	for(int i = 0; i < codes.size(); i++){
+		int delta = 0;
+		switch(codes[i]->kind){
+			case Opcode::CALL:
+				if(((LabelOp*)codes[i]->des)->name == "print"){
+					codes[i - 1]->kind = Opcode::PRT;
+					delta = 1;
+					delete codes[i];
+					codes.erase(codes.begin() + i--);
+					i--;
+				}
+				break;
+			case Opcode::PRT:
+				if(codes[i - 1]->kind == Opcode::ITF || codes[i - 1]->kind == Opcode::FTI){
+					if(*((VariableOp*)codes[i - 1]->des) == *((VariableOp*)codes[i]->src1)){
+						auto operand = codes[i - 1]->src1->clone();
+						auto remove = codes[i]->src1;
+						codes[i]->src1 = operand;
+						delete remove;
+						delete codes[i - 1];
+						codes.erase(codes.begin() + --i);
+						delta = 1;
+					}
+				}
+		}
+		for(Pair & label : labels)
+			if(label.second >= i) label.second -= delta;
+	}
+	for(Pair & label : labels) this->labels[label.first] = label.second;
 }
