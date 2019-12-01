@@ -5,12 +5,15 @@
 
 #define LEVEL(level) for(int i = 0; i < level; i++) printf("  ");
 
+extern int yylineno;
+
 ParseTree * CreatePT(NodeKind type, char * data, ParseTree * ch, ParseTree * s){
 	ParseTree * node = malloc(sizeof(ParseTree));
 	node->type = type;
 	node->data = data;
 	node->child = ch;
 	node->sibling = s;
+	node->line = yylineno;
 	return node;
 }
 

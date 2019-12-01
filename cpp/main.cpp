@@ -29,8 +29,6 @@ int main(int argc, char *argv[]){
 	TypeResolver resolver;
 	AST->accept(*dynamic_cast<Visitor*>(&resolver));
 	resolver.getTable()->SizeNomalize();
-	ICGenerator generator(resolver.getTable());
-	AST->accept(*dynamic_cast<Visitor*>(&generator));
 	if(head != NULL){
 		if(ParseTree){
 			printf("\n================ Parse Tree ==============\n\n");
@@ -45,10 +43,15 @@ int main(int argc, char *argv[]){
 			printf("\n============= Symbol Table ===============\n\n");
 			PrintTable(resolver.getTable(), 0);
 		}
+	}	
+	if(IsError != 1){
+		printf("\n=========== Intermediate Code ============\n\n");
+		ICGenerator generator(resolver.getTable());
+		AST->accept(*dynamic_cast<Visitor*>(&generator));
+		generator.Optimize();
+		generator.unLabel();
+		generator.PrintCode();
 	}
-	printf("\n=========== Intermediate Code ============\n\n");
-	generator.Optimize();
-	generator.PrintCode();
 	DeletePT(head);
 	delete AST;
 	delete resolver.getTable();

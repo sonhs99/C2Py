@@ -1,8 +1,9 @@
 #include "TypeResolver.h"
 #include <iostream>
 
-void SymbolTable::addVar(std::string & n, int type, int s){
-	vars.push_back(TypeInfo(n, size, type, s));
+void SymbolTable::addVar(std::string & n, int type, int s, int st){
+	if(st == TypeInfo::STACK && parent == NULL) st = TypeInfo::STATIC;
+	vars.push_back(TypeInfo(n, size, type, s, st));
 	size++;
 }
 
@@ -55,7 +56,7 @@ void SymbolTable::print(){
 	}
 }
 
-void PrintTable(SymbolTable * t, int level){
+void PrintTable(SymbolTable * t, int level, int temp){
 	auto i = t->sub.begin();
 	for(auto & var : t->vars){
 		for(int i = 0; i < level; i++) std::cout << "  ";
@@ -63,7 +64,7 @@ void PrintTable(SymbolTable * t, int level){
 	}
 	for(int i = 0; i < t->temp; i++){
 		for(int i = 0; i < level; i++) std::cout << "  ";
-		printf("[ +%#04x ] : %8s%02d\n", i+t->size, "_temp", i);
+		printf("[ +%#04x ] : %8s%02d\n", i + t->size + temp, "_temp", i + t->size + temp);
 	}
 	for(auto & func : t->funcs){
 		for(int i = 0; i < level; i++) std::cout << "  ";
@@ -76,18 +77,19 @@ void PrintTable(SymbolTable * t, int level){
 		i++;
 	}
 	for(;i != t->sub.end(); i++){
-		PrintTable(*i, level+1);
+		PrintTable(*i, level+1, temp + t->size + t->temp);
 	}
 }
 
-void SymbolTable::Nomalize(){
+void SymbolTable::Nomalize(int i){
 	for(auto & var : vars){
-		var.offset -= (size + 2);
+		var.offset -= (size + i);
 	}
 	size = 0;
 }
 
 void SymbolTable::SizeNomalize(int s){
+	base = s;
 	for(auto & var : vars){
 		var.offset += s;
 	}

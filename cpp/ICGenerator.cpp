@@ -3,9 +3,16 @@
 
 void ICGenerator::visit(Node & n){ }
 void ICGenerator::visit(ASTNode & n){
+	scope = root;
+	int size = scope->getVariableSize();
+	if(size > 0) codes.push_back(new Opcode(Opcode::ADD,
+								   new RegisterOp(RegisterOp::SP), 
+								   new RegisterOp(RegisterOp::SP),
+								   new LiteralOp(size)));
 	for(Node * n : n.defvars){ 
 		n->accept(*this);
 	}
+	codes.push_back(new Opcode(Opcode::CALL, new LabelOp(n.entry), NULL, NULL));
 	for(Node * n : n.defunc){
 		n->accept(*this);
 	}
@@ -15,13 +22,13 @@ void ICGenerator::visit(DefVarNode & n){
 		auto var = scope->searchVar(n.first);
 		if(var.type % 2 && var.size != 0)
 			codes.push_back(new Opcode(Opcode::ALC,
-								   new VariableOp(Operand::Variable, var.offset), 
+								   new VariableOp(Operand::Variable, var.offset, var.storage), 
 								   new LiteralOp(var.size),
 								   NULL));
 		else if(n.second != NULL) {
 			n.second->accept(*this);
 			codes.push_back(new Opcode(Opcode::MOV,
-								   new VariableOp(Operand::Variable, var.offset), 
+								   new VariableOp(Operand::Variable, var.offset, var.storage), 
 								   operand,
 								   NULL));
 		}
@@ -37,16 +44,17 @@ void ICGenerator::visit(DefFunctionNode & n){
 								   new RegisterOp(RegisterOp::BP), 
 								   new RegisterOp(RegisterOp::SP),
 								   NULL));
-	for(Node * arg : n.args)
-		arg->accept(*this);
+	ret = n.args.size();
+	func_name = n.name;
 	n.block->accept(*this);
+	labels.insert(std::make_pair(std::string("_") + n.name, codes.size() - 1));
 	codes.push_back(new Opcode(Opcode::POP,
-								   new RegisterOp(RegisterOp::SP), 
+								   new RegisterOp(RegisterOp::BP), 
 								   NULL,
 								   NULL));
 	codes.push_back(new Opcode(Opcode::RET,
 								   NULL, 
-								   new LiteralOp(int(n.args.size())),
+								   new LiteralOp(ret),
 								   NULL));
 }
 void ICGenerator::visit(BlockNode & n){
@@ -57,6 +65,9 @@ void ICGenerator::visit(BlockNode & n){
 								   new LiteralOp(size)));
 	auto backup = scope;
 	scope = n.scope;
+	int s_temp = n.scope->getParent()->getParent() != NULL ?
+		n.scope->getParent()->getVariableSize() + n.scope->getParent()->getTemporarySize() : 0;
+	this->size = n.scope->getBaseSize();
 	for(Node * n : n.vars){
 		temp = 0;
 		n->accept(*this);
@@ -80,31 +91,56 @@ void ICGenerator::visit(BasicTypeNode & n){
 void ICGenerator::visit(WhileNode & n){
 	std::string exit_number = std::string("_EXIT") + std::to_string(exit);
 	std::string else_number = std::string("_ELSE") + std::to_string(Else);
-	std::string loop_number = std::string("_LOOP") + std::to_string(stack + 1);
+	std::string loop_number = std::string("_LOOP") + std::to_string(loop);
 	labels.insert(std::make_pair(loop_number, codes.size()));
 	n.cond->accept(*this); 
 	codes.push_back(new Opcode(Opcode::JZ,
 								   new LabelOp(else_number), 
 								   operand));
-	stack++;
+	stack.push(loop++);
 	n.stmt->accept(*this); 
 	codes.push_back(new Opcode(Opcode::JMP,
 								   new LabelOp(loop_number), 
 								   NULL ));
-	stack--;
-	if(n.Else != NULL)
+	stack.pop();
+	if(n.Else != NULL){
 		labels.insert(std::make_pair(else_number, codes.size()));
 		n.Else->accept(*this); 
+	}
 	exit++;
 	labels.insert(std::make_pair(exit_number, codes.size()));
 }
 void ICGenerator::visit(ForNode & n){
+	std::string exit_number = std::string("_EXIT") + std::to_string(exit);
+	std::string else_number = std::string("_ELSE") + std::to_string(Else);
+	std::string loop_number = std::string("_LOOP") + std::to_string(loop);
 	((BinaryNode*)n.cond)->rhs->accept(*this);
-	stack++;
+	int alloc_temp = temp, s = scope->getVariableSize() + size;
+	codes.push_back(new Opcode(Opcode::MOV,
+								   new VariableOp(Operand::Variable, s + alloc_temp + 1), 
+								   operand));
+	labels.insert(std::make_pair(loop_number, codes.size()));
+	codes.push_back(new Opcode(Opcode::EQU,
+								   new VariableOp(Operand::Variable, s + alloc_temp), 
+								   new VariableOp(Operand::Variable, s + alloc_temp + 1),
+							  new LiteralOp(0xffff)));
+	codes.push_back(new Opcode(Opcode::JZ,
+								   new LabelOp(else_number), 
+								   new VariableOp(Operand::Variable, temp)));
+	stack.push(loop++);
 	n.stmt->accept(*this); 
-	stack--;
+	stack.pop();
+	codes.push_back(new Opcode(Opcode::ADD,
+								   new VariableOp(Operand::Variable, s + alloc_temp + 1), 
+								   new VariableOp(Operand::Variable, s + alloc_temp + 1),
+							  new LiteralOp(1)));
+	codes.push_back(new Opcode(Opcode::JMP,
+								   new LabelOp(loop_number), 
+								   NULL ));
 	if(n.Else != NULL)
-		n.Else->accept(*this); 
+		n.Else->accept(*this);
+	labels.insert(std::make_pair(else_number, codes.size()));
+	labels.insert(std::make_pair(exit_number, codes.size() + 1));
 }
 void ICGenerator::visit(IfNode & n){
 	std::string exit_number = std::string("_EXIT") + std::to_string(exit);
@@ -137,7 +173,7 @@ void ICGenerator::visit(BinaryNode & n){
 	n.rhs->accept(*this);
 	auto rhs = operand;
 	Opcode::Kind op;
-	int s = scope->getVariableSize();
+	int s = scope->getVariableSize() + size;
 	switch(n.type){
 		case Plus:
 			op = Opcode::ADD;
@@ -169,9 +205,10 @@ void ICGenerator::visit(BinaryNode & n){
 		case NotEqu:
 			op = Opcode::NEQ;
 			break;
-		case In: //
-			op = Opcode::IN;
-			break;
+		case In:
+			operand = new VariableOp(Operand::Temporary, temp + s);
+			codes.push_back(new Opcode(Opcode::IN, operand->clone(), lhs, rhs));
+			return;
 		case Assign:
 			codes.push_back(new Opcode(Opcode::MOV, lhs, rhs));
 			operand = rhs->clone();
@@ -255,7 +292,7 @@ void ICGenerator::visit(BinaryNode & n){
 void ICGenerator::visit(UnaryNode & n){
 	n.expr->accept(*this);
 	Opcode::Kind op;
-	int s = scope->getVariableSize(); 
+	int s = scope->getVariableSize() + size; 
 	switch(n.type){
 		case Pos:
 			op = Opcode::POS;
@@ -322,13 +359,16 @@ void ICGenerator::visit(LiteralNumberNode & n){
 }
 void ICGenerator::visit(VariableNode & n){
 	int offset = 0;
+	int storage = 0;
 	try{
-		offset = scope->searchVar(n.name).offset;
+		auto var = scope->searchVar(n.name);
+		offset = var.offset;
+		storage = var.storage;
 	} catch(int){
 		operand = new LabelOp(n.name);
 		return;
 	}
-	operand = new VariableOp(Operand::Variable, offset);
+	operand = new VariableOp(Operand::Variable, offset, storage);
 }
 void ICGenerator::visit(FunctionCallNode & n){
 	n.name->accept(*this);
@@ -342,6 +382,8 @@ void ICGenerator::visit(FunctionCallNode & n){
 }
 void ICGenerator::visit(ReturnNode & n){
 	n.expr->accept(*this);
+	codes.push_back(new Opcode(Opcode::MOV, new RegisterOp(RegisterOp::RV) , operand));
+	codes.push_back(new Opcode(Opcode::JMP, new LabelOp(std::string("_") + func_name), NULL));
 }
 void ICGenerator::visit(NopNode & n){
 }
@@ -355,14 +397,14 @@ void ICGenerator::visit(BreakNode & n){
 }
 
 void ICGenerator::visit(ContinueNode & n){
-	std::string loop_number = std::string("_LOOP") + std::to_string(stack);
+	std::string loop_number = std::string("_LOOP") + std::to_string(stack.top());
 	codes.push_back(new Opcode(Opcode::JMP, new LabelOp(loop_number), NULL, NULL));
 }
 
 void ICGenerator::visit(CastNode & n){
 	n.expr->accept(*this);
 	Opcode::Kind op;
-	int s = scope->getVariableSize();
+	int s = scope->getVariableSize() + size;
 	if(n.type == 2) op = Opcode::FTI;
 	else op = Opcode::ITF;
 	if(operand->kind == Operand::Literal){
@@ -475,8 +517,16 @@ void RegisterOp::print(){
 }
 
 void VariableOp::print(){
-	if(storage == Stack) std::cout << "S(";
-	else std::cout << "D(";
+	switch(storage){
+		case Stack:
+			std::cout << "S(";
+			break;
+		case Data:
+			std::cout << "D(";
+			break;
+		case Absolute:
+			std::cout << "A(";
+	}
 	std::cout << offset << ") ";
 }
 
@@ -532,9 +582,22 @@ void ICGenerator::Optimize(){
 						delta = 1;
 					}
 				}
+				
 		}
 		for(Pair & label : labels)
 			if(label.second >= i) label.second -= delta;
 	}
 	for(Pair & label : labels) this->labels[label.first] = label.second;
+}
+
+void ICGenerator::unLabel(){
+	for(Opcode *& code : codes){
+		if(code->des == NULL) continue;
+		if(code->des->kind == Operand::Label){
+			LabelOp * label = dynamic_cast<LabelOp *>(code->des);
+			int num = labels[label->name];
+			code->des = new LiteralOp(num);
+			delete label;
+		}
+	}
 }

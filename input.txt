@@ -1,16 +1,17 @@
 mainprog main;
+
+function func (a:int, b:int) : int 
+begin
+     return 1;
+end
+
 function main
 begin
-	int a;
-	int b = 4 * 3;
-	int[4] c;
-	print(a);
-	a = b = a + 2;
-	if a < c[2] : print(b);
-	elif a == b : print(a);
-	else : b = 5;
-	while a == 5 : begin
-		b = 6;
-	end
-	else: a = 6;
-end	
+	int b, c;
+	int[12] arr;
+	b = 3 + b;
+	for a in arr : c = b + a; 
+	else : print(b);
+
+end
+

@@ -1,0 +1,88 @@
+mainprog myProgram;
+
+int[100] xxxxx, e1;
+int[0] e2;
+float hi, hi2, pi;
+int x, e1;
+
+function dfs(si: int; sj: int; hihihihihi: float; sj: float): float;
+	int[100] xxxxx, e1;
+	int si, hihihihihi;
+	float HelloWorld;
+	int[100] HelloWorld;
+
+	begin
+		x=.12;
+		MyVariable=couldbe(1,2);
+
+		for 12345 in hi2:
+			begin
+				hi = -x * e1[40] / -xxxxx[1];
+				if hi <= 1:
+					begin
+						nop; nop; nop
+					end
+				elif 2 == hi:
+					begin
+						print(dfs);
+						nop; nop; nop
+					end
+				elif 1 > 2:
+					print(hi[1])
+				else:
+					begin
+						while 1!=2:
+							begin
+								e1[90]=e1[90-1]+1;
+								e1[90-1]=e1[90]-1
+							end
+						else:
+							e1[90]=e1[90-1]+1;
+						print(dfs(1,2))
+					end
+			end;
+
+		print(0)
+	end
+
+procedure couldbe(pa1: int);
+	begin
+		return 12*1-9/222+9
+	end
+
+procedure dfs;
+	begin
+		nop
+	end
+
+function hi: int;
+	begin
+		print(1+11+111);
+		return 12*1-9/222+9
+	end
+
+begin
+	print(1 in e1);
+
+	for xxxxx[5] in e1:
+		begin
+			print(e1[e1[e1[e1[e1[e1[e1[50]]]]]]]);
+			hi = 3. + 123 - .3 * 3.112 / 94.24230923540909
+		end
+	else:
+		begin
+			print(hi+xxxxx[1]/hi2)
+		end;
+
+	begin
+		nop
+	end;
+
+	hi = couldbe(100);
+	e1 = hi;
+
+	for hi in e1[0]+93939+14+e1[0]-1349*14:
+		pi = 3.14159265358979323;
+		pi = pi * e1 + xxxxx[0];
+		xxxxx[0] = xxxxx[0] + 1
+end

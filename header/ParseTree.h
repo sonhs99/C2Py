@@ -12,9 +12,12 @@ typedef enum _NodeKind {
 typedef struct TreeNode{
 	NodeKind type;
 	char * data;
+	int line;
 	struct TreeNode * child;
 	struct TreeNode * sibling;
 } ParseTree;
+
+extern int IsError;
 
 #ifdef __cplusplus
 extern "C" {

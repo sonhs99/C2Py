@@ -7,8 +7,10 @@ struct TypeInfo{
 	int offset;
 	int type;
 	int size;
+	int storage;
+	enum { STACK = 0, HEAP, STATIC };
 	std::string name;
-	TypeInfo(std::string & n, int o, int t, int s): name(n), offset(o), type(t), size(s) {};
+	TypeInfo(std::string & n, int o, int t, int s, int st = STACK): name(n), offset(o), type(t), size(s), storage(st) {};
 };
 
 struct FunctionInfo{
@@ -27,25 +29,27 @@ private:
 	SymbolTable * parent;
 	int size = 0;
 	int temp = 0;
+	int base = 0;
 	
 public:
 	SymbolTable(SymbolTable * p = NULL) : parent(p) { }
 	~SymbolTable(){
 		std::for_each(sub.begin(), sub.end(), [=](SymbolTable * s){ delete s; } );
 	}
-	void addVar(std::string & n, int type, int s);
+	void addVar(std::string & n, int type, int s, int st = TypeInfo::STACK);
 	void addFunc(std::string const & n, int ret, std::vector<int> const & arg);
 	void addTable(SymbolTable * t);
-	void Nomalize();
+	void Nomalize(int i = 0);
 	TypeInfo & searchVar(std::string & n);
 	FunctionInfo & searchFunc(std::string & n);
 	SymbolTable * getParent(){ return parent; }
 	void print();
-	friend void PrintTable(SymbolTable * t, int level);
+	friend void PrintTable(SymbolTable * t, int level, int temp);
 	void setTemporaryStorage(int s) { temp = ((temp > s) ? temp : s); }
 	int getTemporarySize() { return temp; }
 	int getVariableSize() { return size;}
 	void SizeNomalize(int s = 0);
+	int getBaseSize(){ return base; }
 };
 
 class TypeResolver : public Visitor {
@@ -98,5 +102,5 @@ public:
 	SymbolTable * getTable() { return root; }
 };
 
-void PrintTable(SymbolTable * t, int level);
+void PrintTable(SymbolTable * t, int level, int temp = 0);
 const char * ResolveType(int type);

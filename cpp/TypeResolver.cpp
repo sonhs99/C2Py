@@ -3,7 +3,8 @@
 #include <iostream>
 
 void TypeResolver::visit(Node & n){
-	std::cerr << "line ( ) : Unknown AST Node" << std::endl;
+	std::cerr << "line (" << n.line <<") : Unknown AST Node" << std::endl;
+	IsError = 1;
 }
 void TypeResolver::visit(ASTNode & n){
 	std::for_each(n.defvars.begin(), n.defvars.end(), [=](Node * n){ 
@@ -14,22 +15,27 @@ void TypeResolver::visit(ASTNode & n){
 	} );
 	try{
 		auto entry = root->searchFunc(n.entry);
-		if(entry.ret != 0 || entry.args.size() != 0)
-			std::cerr << "line ( ) : '" << n.entry <<"' cannot be Entry Point" << std::endl;
+		if(entry.ret != 0 || entry.args.size() != 0){
+			std::cerr << "line (" << n.line <<") : '" << n.entry <<"' cannot be Entry Point" << std::endl;
+		IsError = 1;
+		}
 	}catch(int){
-		std::cerr << "line ( ) : cannot find Entry Point" << std::endl;
+		std::cerr << "line (" << n.line <<") : cannot find Entry Point" << std::endl;
+		IsError = 1;
 	}
 }
 void TypeResolver::visit(DefVarNode & n){
 	n.type->accept(*this);
 	int a = actual;
 	int s = size;
-	for(auto n : n.names){
-		now->addVar(n.first, a, s);
-		if(n.second != NULL) {
-			n.second->accept(*this);
-			if(!IsConvertable(actual, a))
-				std::cerr << "line ( ) : cannot convert '" << ResolveType(a) << "' to '" << ResolveType(actual) <<"'" << std::endl;
+	for(auto na : n.names){
+		now->addVar(na.first, a, s);
+		if(na.second != NULL) {
+			na.second->accept(*this);
+			if(!IsConvertable(actual, a)){
+				std::cerr << "line (" << n.line <<") : cannot convert '" << ResolveType(a) << "' to '" << ResolveType(actual) <<"'" << std::endl;
+			IsError = 1;
+			}
 		}
 	} 
 }
@@ -44,7 +50,7 @@ void TypeResolver::visit(DefFunctionNode & n){
 		arg.push_back(actual);
 	} );
 	root->addFunc(n.name, ret, arg);
-	now->Nomalize();
+	now->Nomalize(2);
 	n.block->accept(*this);
 }
 void TypeResolver::visit(BlockNode & n){
@@ -72,8 +78,8 @@ void TypeResolver::visit(TypeNode & n){
 	if(n.size != NULL) { 
 		temp++;
 		n.size->accept(*this); 
-		if(actual != 2 || size < 0)
-			std::cerr << "line ( ) : size of array must be a positive integer" << std::endl;
+		if(actual != 2 || size < 0){
+			std::cerr << "line (" << n.line <<") : size of array must be a positive integer" << std::endl; IsError = 1;}
 		if(size < 0) size = 0;
 	}
 	actual = temp;
@@ -102,31 +108,34 @@ void TypeResolver::visit(WhileNode & n){
 void TypeResolver::visit(ForNode & n){
 	int s = 0;
 	if(((BinaryNode*)n.cond)->lhs->getT() != Node::VARIABLE){
-		std::cerr << "line ( ) : 'for' statement must have a variable" << std::endl;
+		std::cerr << "line (" << n.line <<") : 'for' statement must have a variable" << std::endl;
+		IsError = 1;
 	}
 	else {
 		if(n.stmt->getT() != Node::BLOCK){
 			auto temp = n.stmt;
-			(n.stmt = new BlockNode());
+			(n.stmt = new BlockNode(n.line));
 			((BlockNode*)n.stmt)->addStatement(temp);
 		}
 		((BinaryNode*)n.cond)->rhs->accept(*this);
-		now->setTemporaryStorage(temp);
+		now->setTemporaryStorage(temp + 2);
 		if(actual == 0);
 		else if(actual/2 == 0 || actual % 2 == 0){
-			std::cerr << "line ( ) : 'for' statement must have an iterable array" << std::endl;
+			std::cerr << "line (" << n.line <<") : 'for' statement must have an iterable array" << std::endl;
+			IsError = 1;
 		}
 		else{
 			now = new SymbolTable(now);
 			usage = true;
-			now->addVar(((VariableNode*)((BinaryNode*)n.cond)->lhs)->name, actual/2, 1);
+			now->addVar(((VariableNode*)((BinaryNode*)n.cond)->lhs)->name, actual-1, 1, TypeInfo::HEAP);
 		}
 	}
+	now->Nomalize();
 	stack++;
 	n.stmt->accept(*this);
 	stack--;
 	if(n.Else != NULL)
-		n.Else->accept(*this); 
+		n.Else->accept(*this);
 }
 void TypeResolver::visit(IfNode & n){
 	n.cond->accept(*this); 
@@ -151,12 +160,14 @@ void TypeResolver::visit(BinaryNode & n){
 	switch(n.type){
 		case In:
 			if(actual%2 == 0){
-				std::cerr << "line ( ) : rhs of 'In' must have a array" << std::endl;
+				std::cerr << "line (" << n.line <<") : rhs of 'In' must have a array" << std::endl;
 				actual = 0;
+				IsError = 1;
 				break;
 			}
 			if(!IsConvertable(e, actual - 1)){
-				std::cerr << "line ( ) : cannot convert '" << ResolveType(e) << "' to '" << ResolveType(actual - 1) <<"'" << std::endl;
+				std::cerr << "line (" << n.line <<") : cannot convert '" << ResolveType(e) << "' to '" << ResolveType(actual - 1) <<"'" << std::endl;
+				IsError = 1;
 			}
 			else if(e != actual - 1)
 				n.lhs = new CastNode(actual, n.lhs);
@@ -164,22 +175,26 @@ void TypeResolver::visit(BinaryNode & n){
 			break;
 		case Array:
 			if(e%2 == 0){
-				std::cerr << "line ( ) : rhs of '[]' must have a array" << std::endl;
+				std::cerr << "line (" << n.line <<") : rhs of '[]' must have a array" << std::endl;
 				actual = 0;
 				lvalue = true;
+				IsError = 1;
 				break;
 			}
-			if(actual != 2)
-				std::cerr << "line ( ) : cannot convert '" << ResolveType(actual) << "' to 'int'" << std::endl;
+			if(actual != 2){
+				std::cerr << "line (" << n.line <<") : cannot convert '" << ResolveType(actual) << "' to 'int'" << std::endl;
+				IsError = 1;}
 			actual = e - 1;
 			lvalue = true;
 			return;
 		case Assign:
 			if(!l){
-				std::cerr << "line ( ) : lhs of '=' must be lvalue " << std::endl;
+				std::cerr << "line (" << n.line <<") : lhs of '=' must be lvalue " << std::endl;
+				IsError = 1;
 			}
-			if(!IsConvertable(e, actual))
-				std::cerr << "line ( ) : cannot convert '" << ResolveType(e) << "' to '"<< ResolveType(actual) << "'" << std::endl;
+			if(!IsConvertable(e, actual)){
+				std::cerr << "line (" << n.line <<") : cannot convert '" << ResolveType(e) << "' to '"<< ResolveType(actual) << "'" << std::endl;
+			IsError = 1;}
 			else if(e != actual)
 				n.rhs = new CastNode(e, n.rhs);
 			lvalue = true;
@@ -189,45 +204,49 @@ void TypeResolver::visit(BinaryNode & n){
 		case Div:
 		case Mul:
 			if(e%2 || actual%2){
-				std::cerr << "line ( ) : Arithmetic Operator cannot hold array(s) as an operend" << std::endl;
+				std::cerr << "line (" << n.line <<") : Arithmetic Operator cannot hold array(s) as an operend" << std::endl;
+				IsError = 1;
 				actual = 4;
 				break;
 			}
 			if(e != actual){
 				if(e == 4){
-					if(!IsConvertable(actual, 4))
-						std::cerr << "line ( ) : cannot convert '" << ResolveType(actual) << "' to 'float'" << std::endl;
+					if(!IsConvertable(actual, 4)){
+						std::cerr << "line (" << n.line <<") : cannot convert '" << ResolveType(actual) << "' to 'float'" << std::endl;
+					IsError = 1;}
 					else n.rhs = new CastNode(4, n.rhs);
 				}
 				else if(actual == 4){
-					if(!IsConvertable(e, 4))
-						std::cerr << "line ( ) : cannot convert '" << ResolveType(e) << "' to 'float'" << std::endl;
+					if(!IsConvertable(e, 4)){
+						std::cerr << "line (" << n.line <<") : cannot convert '" << ResolveType(e) << "' to 'float'" << std::endl;
+					IsError = 1;}
 					else n.lhs = new CastNode(4, n.lhs);
 				}
 				else
-					std::cerr << "line ( ) : unknown type" << std::endl;
+					std::cerr << "line (" << n.line <<") : unknown type" << std::endl;
+				IsError = 1;
 				actual = 4;
 			}
 			break;
 		default:
 			if(e%2 || actual%2){
-				std::cerr << "line ( ) : Relational Operator cannot hold array(s) as an operend" << std::endl;
+				std::cerr << "line (" << n.line <<") : Relational Operator cannot hold array(s) as an operend" << std::endl;
 				actual = 2;
 				break;
 			}
 			if(e != actual){
 				if(e == 4){
-					if(!IsConvertable(actual, 4))
-						std::cerr << "line ( ) : cannot convert '" << ResolveType(actual) << "' to 'float'" << std::endl;
+					if(!IsConvertable(actual, 4)){
+						std::cerr << "line (" << n.line <<") : cannot convert '" << ResolveType(actual) << "' to 'float'" << std::endl;IsError = 1;}
 					else n.rhs = new CastNode(4, n.rhs);
 				}
 				else if(actual == 4){
-					if(!IsConvertable(e, 4))
-						std::cerr << "line ( ) : cannot convert '" << ResolveType(e) << "' to 'float'" << std::endl;
+					if(!IsConvertable(e, 4)){
+						std::cerr << "line (" << n.line <<") : cannot convert '" << ResolveType(e) << "' to 'float'" << std::endl;IsError = 1;}
 					else n.lhs = new CastNode(4, n.lhs);
 				}
-				else
-					std::cerr << "line ( ) : unknown type" << std::endl;
+				else{
+					std::cerr << "line (" << n.line <<") : unknown type" << std::endl;IsError = 1;}
 			}
 			actual = 2;
 	}
@@ -255,12 +274,14 @@ void TypeResolver::visit(UnaryNode & n){
 		case Pos:
 		case Neg:
 			if(IsConvertable(actual, 2)){
-				std::cerr << "line ( ) : cannot convert '" << ResolveType(actual) << "' to 'int'" << std::endl;
+				std::cerr << "line (" << n.line <<") : cannot convert '" << ResolveType(actual) << "' to 'int'" << std::endl;
+				IsError = 1;
 			}
 			break;
 		case Not:
 			if(IsConvertable(actual, 2)){
-				std::cerr << "line ( ) : cannot convert '" << ResolveType(actual) << "' to 'int'" << std::endl;
+				std::cerr << "line (" << n.line <<") : cannot convert '" << ResolveType(actual) << "' to 'int'" << std::endl;
+				IsError = 1;
 			}
 			if(actual != 2)
 				n.expr = new CastNode(2, n.expr);
@@ -301,27 +322,30 @@ void TypeResolver::visit(VariableNode & n){
 		}catch(int){
 			actual = 0;
 			lvalue = false;
-		std::cerr << "line ( ) : '" << n.name << "' is not defined in the scope" << std::endl;
+		std::cerr << "line (" << n.line <<") : '" << n.name << "' is not defined in the scope" << std::endl;
+			IsError = 1;
 		}
 	}
 }
 void TypeResolver::visit(FunctionCallNode & n){
 	n.name->accept(*this);
 	if(actual != 1){
-		std::cerr << "line ( ) : lhs cannot call as function" << std::endl;
+		std::cerr << "line (" << n.line <<") : lhs cannot call as function" << std::endl;
+		IsError = 1;
 	}
 	else if(func->args.size() != n.args.size()){
-		std::cerr << "line ( ) : argument size is not matched" << std::endl;
+		std::cerr << "line (" << n.line <<") : argument size is not matched" << std::endl;
+		IsError = 1;
 	}
 	bool IsEnd = actual != 1 || func->args.size() != n.args.size();
 	int i = 0;
-	for(Node *& n : n.args){ 
-		n->accept(*this);
+	for(Node *& na : n.args){ 
+		na->accept(*this);
 		if(!IsEnd){
-			if(IsConvertable(actual,func->args[i]))
-				if(actual != func->args[i]) n = new CastNode(func->args[i], n);
-			else
-				std::cerr << "line ( ) : cannot convert '" << ResolveType(actual) << "' to '" << ResolveType(func->args[i]) <<"'" << std::endl;
+			if(!IsConvertable(actual,func->args[i]))
+				if(actual != func->args[i]) na = new CastNode(func->args[i], na);
+			else{
+				std::cerr << "line (" << n.line <<") : cannot convert '" << ResolveType(actual) << "' to '" << ResolveType(func->args[i]) <<"'" << std::endl;IsError = 1;}
 		}
 		i++;
 	}
@@ -331,7 +355,8 @@ void TypeResolver::visit(FunctionCallNode & n){
 void TypeResolver::visit(ReturnNode & n){
 	n.expr->accept(*this);
 	if(!IsConvertable(actual, ret)){
-		std::cerr << "line ( ) : cannot convert '" << ResolveType(actual) << "' to '" << ResolveType(ret) <<"'" << std::endl;
+		std::cerr << "line (" << n.line <<") : cannot convert '" << ResolveType(actual) << "' to '" << ResolveType(ret) <<"'" << std::endl;
+		IsError = 1;
 	}
 	else if(actual != ret)
 		n.expr = new CastNode(ret, n.expr);
@@ -346,13 +371,13 @@ void TypeResolver::visit(VoidNode & n){
 }
 
 void TypeResolver::visit(BreakNode & n){
-	if(stack == 0)
-		std::cerr << "line ( ) : Break statement is outside of loop" << std::endl;
+	if(stack == 0){
+		std::cerr << "line (" << n.line <<") : Break statement is outside of loop" << std::endl;IsError = 1;}
 }
 
 void TypeResolver::visit(ContinueNode & n){
-	if(stack == 0)
-		std::cerr << "line ( ) : Continue statement is outside of loop" << std::endl;
+	if(stack == 0){
+		std::cerr << "line (" << n.line <<") : Continue statement is outside of loop" << std::endl;IsError = 1;}
 }
 
 void TypeResolver::visit(CastNode & n){

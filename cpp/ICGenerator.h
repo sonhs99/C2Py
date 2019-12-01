@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <vector>
+#include <stack>
 #include <map>
 #include "AST.h"
 #include "TypeResolver.h"
@@ -17,6 +18,7 @@ public:
 class Operand{
 public:
 	friend class ICGenerator;
+	friend class Executor;
 	enum Kind{ Literal = 0, Register, Variable, Temporary, Label };
 	Operand(Kind k) : kind(k) {};
 	virtual void print();
@@ -34,6 +36,7 @@ private:
 	};
 public:
 	friend class ICGenerator;
+	friend class Executor;
 	LiteralOp(int v) :
 		Operand(Literal), IsInt(true), ival(v) {};
 	LiteralOp(float v) :
@@ -48,6 +51,7 @@ private:
 public:
 	enum {PC = 0, BP, SP, RV};
 	friend class ICGenerator;
+	friend class Executor;
 	RegisterOp(int v) :
 		Operand(Register), i(v) {};
 	void print();
@@ -59,10 +63,11 @@ private:
 	int offset;
 	int storage;
 public:
-	enum {Stack = 0, Data};
+	enum {Stack = 0, Data, Absolute};
 	friend class ICGenerator;
-	VariableOp(Operand::Kind k, int o, bool s = false) :
-		Operand(k), offset(o), storage(s ? Data : Stack) {};
+	friend class Executor;
+	VariableOp(Operand::Kind k, int o, int s = Stack) :
+		Operand(k), offset(o), storage(s) {};
 	void print();
 	Operand * clone() { return new VariableOp(kind, offset, storage == Data); }
 	bool operator==(const VariableOp & v){
@@ -77,6 +82,7 @@ private:
 	std::string name;
 public:
 	friend class ICGenerator;
+	friend class Executor;
 	LabelOp(std::string const & n) : 
 		Operand(Operand::Label), name(n) {};
 	void print();
@@ -86,6 +92,7 @@ public:
 class Opcode{
 public:
 	friend class ICGenerator;
+	friend class Executor;
 	enum Kind{ ADD = 0, SUB, DIV, MUL, POS, NEG,
 			 NOT, EQU, NEQ, GRE, LES, GEQ, LEQ, IN,
 			  PUSH, POP, CALL, RET, MOV, 
@@ -108,12 +115,18 @@ class ICGenerator : public Visitor{
 private:
 	std::vector<Opcode*> codes;
 	std::map<std::string, int> labels;
+	std::stack<int> stack;
+	
+	std::string func_name;
 	SymbolTable * root;
 	SymbolTable * scope;
-	int stack = 0;
+	
+	int loop = 0;
 	int temp = 0;
 	int Else = 0;
 	int exit = 0;
+	int ret = 0;
+	int size = 0;
 	
 	Operand * operand = NULL;
 public:
@@ -142,5 +155,6 @@ public:
 	void visit(CastNode & n);
 	void PrintCode();
 	void Optimize();
+	void unLabel();
 };
 

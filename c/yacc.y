@@ -56,14 +56,7 @@ program
 			CreatePT(List, "list", $4,
 			CreatePT(List, "list", $5, NULL))
 		, NULL);
-		*pt = $$;
-	}
-	|MAINPROG IDENT error declarations subprograms{
-		fprintf(stderr, "line (%d) : \';\' is missing\n", yylineno);
-		$$ = CreatePT(Root, strdup($2), 
-			CreatePT(List, "list", $4,
-			CreatePT(List, "list", $5, NULL))
-		, NULL);
+		IsError = 1;
 		*pt = $$;
 	}
 	|MAINPROG error declarations subprograms{
@@ -73,6 +66,16 @@ program
 			CreatePT(List, "list", $3,
 			CreatePT(List, "list", $4, NULL))
 		, NULL);
+		IsError = 1;
+		*pt = $$;
+	}
+	|MAINPROG IDENT error declarations subprograms{
+		fprintf(stderr, "line (%d) : \';\' is missing\n", yylineno);
+		$$ = CreatePT(Root, strdup($2), 
+			CreatePT(List, "list", $4,
+			CreatePT(List, "list", $5, NULL))
+		, NULL);
+		IsError = 1;
 		*pt = $$;
 	}
 	
@@ -81,10 +84,11 @@ declarations
 		$1->sibling = $2;
 		$$ = CreatePT(Decl, "decl", $1, $4);
 	}
-	|type identifier_list error declarations {
+	|type identifier_list declarations {
 		fprintf(stderr, "line (%d) : \';\' is missing\n", yylineno);
 		$1->sibling = $2;
-		$$ = CreatePT(Decl, "decl", $1, $4);
+		$$ = CreatePT(Decl, "decl", $1, $3);
+		IsError = 1;
 	}
 	| { $$ = CreatePT(Void, "void", NULL, NULL); }
 	
@@ -94,12 +98,17 @@ identifier_list
 	|error {
 		fprintf(stderr, "line (%d) : \'Ident\' is missing\n", yylineno);
 		$$ = CreatePT(Void, "void", NULL, NULL);
+		IsError = 1;
 	}
 	
 init
 	:ASS expr { $$ = $2;}
+	| expr { 
+		fprintf(stderr, "line (%d) : \'=\' is missing\n", yylineno);
+		IsError = 1;
+		$$ = $1; }
 	| { $$ = CreatePT(Void, "void", NULL, NULL); }
-	| error { $$ = CreatePT(Void, "void", NULL, NULL); }
+	| error { $$ = CreatePT(Void, "void", NULL, NULL); IsError = 1;}
 	
 type
 	: standard_type { $$ = CreatePT(Type, "type", $1, NULL); }
@@ -115,33 +124,39 @@ type
 		fprintf(stderr, "line (%d) : \']\' is missing\n", yylineno);
 		$1->sibling = CreatePT(Num, strdup($3), NULL, NULL);
 		$$ = CreatePT(Type, "type", $1, NULL);
+		IsError = 1;
 	}
 	| standard_type LBRACKET error {
 		fprintf(stderr, "line (%d) : \'NUMBER\' is missing\n", yylineno);
 		fprintf(stderr, "line (%d) : \']\' is missing\n", yylineno);
 		$1->sibling = CreatePT(Void, "void", NULL, NULL);
 		$$ = CreatePT(Type, "type", $1, NULL);
+		IsError = 1;
 	}
 	| standard_type LBRACKET error RBRACKET {
 		fprintf(stderr, "line (%d) : \'NUMBER\' is missing\n", yylineno);
 		$1->sibling = CreatePT(Void, "void", NULL, NULL);
 		$$ = CreatePT(Type, "type", $1, NULL);
+		IsError = 1;
 	}
 	| standard_type NUMBER RBRACKET{
 		fprintf(stderr, "line (%d) : \'[\' is missing\n", yylineno);
 		$1->sibling = CreatePT(Num, strdup($2), NULL, NULL);
 		$$ = CreatePT(Type, "type", $1, NULL);
+		IsError = 1;
 	}
 	| standard_type NUMBER error{
 		fprintf(stderr, "line (%d) : \'[\' is missing\n", yylineno);
 		fprintf(stderr, "line (%d) : \']\' is missing\n", yylineno);
 		$1->sibling = CreatePT(Num, strdup($2), NULL, NULL);
 		$$ = CreatePT(Type, "type", $1, NULL);
+		IsError = 1;
 	}
 	| standard_type RBRACKET{
 		fprintf(stderr, "line (%d) : \'[\' is missing\n", yylineno);
 		fprintf(stderr, "line (%d) : \'NUMBER\' is missing\n", yylineno);
 		$$ = CreatePT(Type, "type", $1, NULL);
+		IsError = 1;
 	}
 	
 standard_type
@@ -150,6 +165,7 @@ standard_type
 	| error error {
 		fprintf(stderr, "line (%d) : \'type\' is required\n", yylineno);
 		$$ = CreatePT(Void, "void", NULL, NULL);
+		IsError = 1;
 	}
 	
 subprograms
@@ -161,6 +177,12 @@ subprogram
 		$1->child->sibling->sibling = $2;
 		$$ = $1;
 	}
+	|subprogram_head error block {
+		fprintf(stderr, "line (%d) : Unexpected token\n", yylineno);
+		$1->child->sibling->sibling = $3;
+		$$ = $1;
+		IsError = 1;
+	}
 
 subprogram_head
 	:FUNCTION IDENT args COLON type {
@@ -171,17 +193,20 @@ subprogram_head
 		fprintf(stderr, "line (%d) : \'Ident\' is missing\n", yylineno);
 		$3->sibling = $5;
 		$$ = CreatePT(Func, NULL, $3, NULL);
+		IsError = 1;
 	}
 	|FUNCTION IDENT args error type {
 		fprintf(stderr, "line (%d) : \':\' is missing\n", yylineno);
 		$3->sibling = $5;
 		$$ = CreatePT(Func, strdup($2), $3, NULL);
+		IsError = 1;
 	}
 	|FUNCTION error args error type {
 		fprintf(stderr, "line (%d) : \'Ident\' is missing\n", yylineno);
 		fprintf(stderr, "line (%d) : \':\' is missing\n", yylineno);
 		$3->sibling = $5;
 		$$ = CreatePT(Func, NULL, $3, NULL);
+		IsError = 1;
 	}
 	|FUNCTION IDENT args { 
 		$3->sibling = CreatePT(Void, "void", NULL, NULL);
@@ -191,6 +216,7 @@ subprogram_head
 		fprintf(stderr, "line (%d) : \'Ident\' is missing\n", yylineno);
 		$3->sibling = CreatePT(Void, "void", NULL, NULL);
 		$$ = CreatePT(Func, NULL, $3, NULL); 
+		IsError = 1;
 	}
 	
 args
@@ -198,6 +224,7 @@ args
 	|LPAREN params error {
 		fprintf(stderr, "line (%d) : \')\' is missing\n", yylineno);
 		$$ = CreatePT(List, "list", $2, NULL);
+		IsError = 1;
 	}
 	| { $$ = CreatePT(Void, "void", NULL, NULL); }
 	
@@ -217,6 +244,7 @@ param
 		fprintf(stderr, "line (%d) : \':\' is missing\n", yylineno);
 		$3->sibling = CreatePT(Ident, strdup($1), NULL, NULL);
 		$$ = CreatePT(Param, "param", $3, NULL);
+		IsError = 1;
 	}
 
 block
@@ -234,7 +262,7 @@ stmts
 	
 stmt
 	:stmt_semi SEMICOLON { $$ = $1; }
-	|stmt_semi error { fprintf(stderr, "line (%d) : \';\' is missing\n", yylineno); $$ = $1;}
+	|stmt_semi error { fprintf(stderr, "line (%d) : \';\' is missing\n", yylineno); $$ = $1; IsError = 1;}
 	|block
 	|if
 	|while
@@ -253,6 +281,7 @@ ret_expr
 	| { $$ = CreatePT(Void, "void", NULL, NULL); }
 	|error {
 		fprintf(stderr, "line (%d) : \'expr\' is required\n", yylineno);
+		IsError = 1;
 		$$ = CreatePT(Void, "void", NULL, NULL);
 		}
 	
@@ -264,6 +293,7 @@ if
 	}
 	|IF expr error stmt elif else{
 		fprintf(stderr, "line (%d) : \':\' is required\n", yylineno);
+		IsError = 1;
 		$2->sibling = $4;
 		$4->sibling = CreatePT(List, "list", $5, $6);
 		$$ = CreatePT(If, "if", $2, NULL);
@@ -277,6 +307,7 @@ elif
 	| { $$ = CreatePT(Void, "void", NULL, NULL); }
 	|ELIF expr error stmt elif{
 		fprintf(stderr, "line (%d) : \':\' is required\n", yylineno);
+		IsError = 1;
 		$2->sibling = $4;
 		$$ = CreatePT(Elif, "elif", $2, $5);
 	}
@@ -287,6 +318,7 @@ else
 	|ELSE error stmt { 
 		fprintf(stderr, "line (%d) : \':\' is required\n", yylineno);
 		$$ = CreatePT(Else, "else", $3, NULL); 
+		IsError = 1;
 	}
 	
 while
@@ -298,6 +330,7 @@ while
 		fprintf(stderr, "line (%d) : \':\' is required\n", yylineno);
 		$2->sibling = $4; $4->sibling = $5;
 		$$ = CreatePT(While, "while", $2, NULL);
+		IsError = 1;
 	}
 	
 for
@@ -313,6 +346,7 @@ for
 		$$ = CreatePT(For, "for", 
 			CreatePT(In, "in", $2, $6),
 			NULL);
+			IsError = 1;
 	}
 	|FOR expr COLON stmt else {
 		fprintf(stderr, "line (%d) : \'in\' is required\n", yylineno);
@@ -320,6 +354,7 @@ for
 		$$ = CreatePT(For, "for", 
 			CreatePT(In, "in", $2, $4),
 			NULL);
+			IsError = 1;
 	}
 
 expr_list
@@ -332,6 +367,7 @@ exprs
 	|expr error exprs {
 		fprintf(stderr, "line (%d) : \',\' is missing\n", yylineno);
 		$1->sibling = $3; $$ = $1;
+		IsError = 1;
 	}
 	
 expr
@@ -367,12 +403,12 @@ term
 	|IDENT { $$ = CreatePT(Var, strdup($1), NULL, NULL); }
 	|LPAREN expr RPAREN { $$ = $2; }
 	|LPAREN expr error { fprintf(stderr, "line (%d) : \')\' is required\n", yylineno); $$ = $2; }
-	|error { fprintf(stderr, "line (%d) : \'term\' is required\n", yylineno); $$ = CreatePT(Void, "void", NULL, NULL);}
+	|error { fprintf(stderr, "line (%d) : \'term\' is required\n", yylineno); $$ = CreatePT(Void, "void", NULL, NULL); IsError = 1;}
 	
 number
 	:NUMBER { $$ = CreatePT(Num, strdup($1), NULL, NULL); }
 	|NUMBER number {
 		fprintf(stderr, "line (%d) : \'number\' is declared repeatedly\n", yylineno);
 		free($1); $$ = $2; 
-		}
+		IsError = 1;}
 %%
